@@ -24,7 +24,13 @@
 - acp_status: running
 
 ## Stories
-- Not generated yet
+- [x] Story 1.1: Project Initialization and Dev Environment (commit: 0ebf8fc)
+- [ ] Story 1.2: Database Schema and Prisma Setup for Users
+- [ ] Story 1.3: Email Password Registration
+- [ ] Story 1.4: Email Password Login and Session Management
+- [ ] Story 1.5: OAuth Login GitHub and Google
+- [ ] Story 1.6: Password Reset via Email
+- [ ] Story 1.7: User Profile Management
 
 ## Completed Workflows
 - [x] project initialization
