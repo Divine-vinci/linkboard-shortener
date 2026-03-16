@@ -8,8 +8,14 @@
 - Phase: 1
 - Current story: none
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Claude ACP completed `create-product-brief`.
-- Next step: Commit & push product brief, then start workflow: create-prd
+- Last action: Committed and pushed product brief, then started `create-prd` via Claude ACP.
+- Next step: Poll ACP session agent:claude:acp:e43a58fd-bb6d-4845-a4fa-07661f5f003b for create-prd completion
+
+## ACP Session
+- acp_session_key: agent:claude:acp:e43a58fd-bb6d-4845-a4fa-07661f5f003b
+- acp_started_at: 2026-03-16T01:30:00Z
+- acp_workflow: create-prd
+- acp_status: running
 
 ## Stories
 - Not generated yet

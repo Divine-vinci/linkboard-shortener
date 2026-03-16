@@ -2,7 +2,7 @@
   "projectName": "Linkboard",
   "projectPath": "/home/clawd/projects/linkboard-shortener",
   "createdAt": "2026-03-16T00:33:19.173Z",
-  "currentPhase": "analysis",
+  "currentPhase": "planning",
   "activeWorkflow": null,
   "completedWorkflows": [
     {
@@ -11,6 +11,13 @@
       "agentName": "Mary",
       "completedAt": "2026-03-16T00:35:00.000Z",
       "outputFile": "_bmad-output/planning-artifacts/product-brief.md"
+    },
+    {
+      "id": "create-prd",
+      "agentId": "pm",
+      "agentName": "John",
+      "completedAt": "2026-03-16T01:31:00.000Z",
+      "outputFile": "_bmad-output/planning-artifacts/prd.md"
     }
   ]
 }
