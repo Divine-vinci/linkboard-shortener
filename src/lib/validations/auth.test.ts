@@ -1,4 +1,4 @@
-import { registerSchema } from "@/lib/validations/auth";
+import { loginSchema, registerSchema } from "@/lib/validations/auth";
 
 describe("src/lib/validations/auth.ts", () => {
   it("normalizes valid registration input", () => {
@@ -53,5 +53,27 @@ describe("src/lib/validations/auth.ts", () => {
     expect(result.error?.flatten().fieldErrors.password).toContain(
       "Password must be 128 characters or fewer",
     );
+  });
+
+  it("normalizes valid login input", () => {
+    const result = loginSchema.parse({
+      email: "  USER@Example.COM ",
+      password: "password123",
+    });
+
+    expect(result).toEqual({
+      email: "user@example.com",
+      password: "password123",
+    });
+  });
+
+  it("requires a password for login", () => {
+    const result = loginSchema.safeParse({
+      email: "user@example.com",
+      password: "",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.flatten().fieldErrors.password).toContain("Password is required");
   });
 });
