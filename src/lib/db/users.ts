@@ -40,3 +40,9 @@ export async function updateUser(id: string, data: UpdateUserInput) {
     data,
   });
 }
+
+export async function deleteSessionsByUserId(userId: string) {
+  return prisma.session.deleteMany({
+    where: { userId },
+  });
+}

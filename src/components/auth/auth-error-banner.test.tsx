@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import {
   AuthErrorBanner,
   getAuthErrorMessage,
+  getAuthSuccessMessage,
 } from "@/components/auth/auth-error-banner";
 
 const EXPECTED_MESSAGE =
@@ -18,6 +19,12 @@ describe("src/components/auth/auth-error-banner.tsx", () => {
 
   it("returns null when there is no error", () => {
     expect(getAuthErrorMessage(undefined)).toBeNull();
+  });
+
+  it("returns the password-reset success message for the supported success code", () => {
+    expect(getAuthSuccessMessage("password-reset")).toBe(
+      "Your password has been reset. Sign in with your new password.",
+    );
   });
 
   it("returns null for unrecognized error codes", () => {
@@ -52,5 +59,13 @@ describe("src/components/auth/auth-error-banner.tsx", () => {
     const { container } = render(<AuthErrorBanner error="SomethingElse" />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("renders a success banner for password reset completion", () => {
+    render(<AuthErrorBanner success="password-reset" />);
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Your password has been reset. Sign in with your new password.",
+    );
   });
 });

@@ -18,7 +18,7 @@ export const oauthProviderAvailability = {
 } as const;
 
 export function buildAuthProviders() {
-  const providers = [
+  const providers: Provider[] = [
     Credentials({
       name: "Email and Password",
       credentials: {

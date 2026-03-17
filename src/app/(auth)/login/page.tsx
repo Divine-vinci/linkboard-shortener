@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AuthErrorBanner } from "@/components/auth/auth-error-banner";
@@ -8,6 +9,7 @@ import { auth, oauthProviderAvailability } from "@/lib/auth/config";
 type LoginPageProps = {
   searchParams?: Promise<{
     error?: string;
+    success?: string;
   }>;
 };
 
@@ -36,7 +38,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       </header>
 
       <div className="space-y-4">
-        <AuthErrorBanner error={resolvedSearchParams?.error} />
+        <AuthErrorBanner
+          error={resolvedSearchParams?.error}
+          success={resolvedSearchParams?.success}
+        />
         <OAuthButtons enabledProviders={enabledProviders} />
         {enabledProviders.length > 0 ? (
           <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-zinc-500">
@@ -46,6 +51,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         ) : null}
         <LoginForm />
+        <div className="text-right text-sm">
+          <Link
+            href="/reset-password"
+            className="font-medium text-emerald-300 underline-offset-4 transition hover:text-emerald-200 hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
       </div>
     </section>
   );

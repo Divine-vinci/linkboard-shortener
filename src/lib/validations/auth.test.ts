@@ -1,4 +1,9 @@
-import { loginSchema, registerSchema } from "@/lib/validations/auth";
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
+} from "@/lib/validations/auth";
 
 describe("src/lib/validations/auth.ts", () => {
   it("normalizes valid registration input", () => {
@@ -75,5 +80,28 @@ describe("src/lib/validations/auth.ts", () => {
 
     expect(result.success).toBe(false);
     expect(result.error?.flatten().fieldErrors.password).toContain("Password is required");
+  });
+
+  it("normalizes valid forgot-password input", () => {
+    const result = forgotPasswordSchema.parse({
+      email: "  USER@Example.COM ",
+    });
+
+    expect(result).toEqual({
+      email: "user@example.com",
+    });
+  });
+
+  it("requires a token and a sufficiently strong reset password", () => {
+    const result = resetPasswordSchema.safeParse({
+      token: "",
+      password: "short",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.flatten().fieldErrors.token).toContain("Token is required");
+    expect(result.error?.flatten().fieldErrors.password).toContain(
+      "Password must be at least 8 characters",
+    );
   });
 });
