@@ -8,7 +8,7 @@ development_status:
   epic-1: in-progress
   1-1-project-initialization-and-dev-environment: done
   1-2-database-schema-and-prisma-setup-for-users: done
-  1-3-email-password-registration: backlog
+  1-3-email-password-registration: done
   1-4-email-password-login-and-session-management: backlog
   1-5-oauth-login-github-and-google: backlog
   1-6-password-reset-via-email: backlog

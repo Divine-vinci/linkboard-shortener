@@ -8,8 +8,8 @@
 - Phase: 4
 - Current story: 1.3 Email Password Registration
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Story 1.2 verified complete — Prisma seed fixed and executed, seeded user confirmed in Supabase Postgres, DB integration tests and lint passing.
-- Next step: Commit & push Story 1.2, then start workflow: create-story
+- Last action: Heartbeat polled ACP review session `agent:claude:acp:d59f5990-1cb5-4b7d-a88f-77fd84a9208c`, confirmed Story 1.3 code-review completed, and finalized the BMAD workflow.
+- Next step: Commit & push Story 1.3, then start workflow: create-story for Story 1.4
 
 ## ACP Session
 - acp_session_key: agent:claude:acp:b72eb382-9c76-4c2c-b28c-2d19d1b3e2ed
@@ -20,7 +20,7 @@
 ## Stories
 - [x] Story 1.1: Project Initialization and Dev Environment (commit: 0ebf8fc)
 - [x] Story 1.2: Database Schema and Prisma Setup for Users (verified complete; pending commit)
-- [ ] Story 1.3: Email Password Registration
+- [x] Story 1.3: Email Password Registration
 - [ ] Story 1.4: Email Password Login and Session Management
 - [ ] Story 1.5: OAuth Login GitHub and Google
 - [ ] Story 1.6: Password Reset via Email
@@ -38,6 +38,9 @@
 - [x] create-story — Story 1.2
 - [x] dev-story — Story 1.2
 - [x] code-review — Story 1.2
+- [x] create-story — Story 1.3
+- [x] dev-story — Story 1.3
+- [x] code-review — Story 1.3
 
 ## Blockers
 - None — Postgres connected via Supabase, migration applied successfully.

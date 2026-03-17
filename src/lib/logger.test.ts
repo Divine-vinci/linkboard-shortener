@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { logger } from "@/src/lib/logger";
+import { logger } from "@/lib/logger";
 
 describe("logger", () => {
   let writeSpy: ReturnType<typeof vi.spyOn>;

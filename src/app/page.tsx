@@ -1,5 +1,5 @@
-import { env } from "@/src/config/env";
-import { successResponse } from "@/src/lib/api-response";
+import { env } from "@/config/env";
+import { successResponse } from "@/lib/api-response";
 
 function getReadiness() {
   return successResponse({

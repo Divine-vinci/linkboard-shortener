@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { errorResponse, successResponse } from "@/src/lib/api-response";
-import { AppError } from "@/src/lib/errors";
+import { errorResponse, successResponse } from "@/lib/api-response";
+import { AppError } from "@/lib/errors";
 
 describe("api-response helpers", () => {
   it("wraps successful payloads in a data envelope", () => {

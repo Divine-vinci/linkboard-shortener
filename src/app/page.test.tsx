@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 
-vi.mock("@/src/config/env", () => ({
+vi.mock("@/config/env", () => ({
   env: {
     NODE_ENV: "test",
     NEXT_PUBLIC_APP_URL: "http://localhost:3000",
@@ -12,7 +12,7 @@ vi.mock("@/src/config/env", () => ({
 }));
 
 import { render, screen } from "@testing-library/react";
-import Home from "@/src/app/page";
+import Home from "@/app/page";
 
 describe("Home", () => {
   it("renders the foundation readiness message", () => {

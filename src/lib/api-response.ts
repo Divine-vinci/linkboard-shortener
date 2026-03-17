@@ -1,4 +1,4 @@
-import { AppError } from "@/src/lib/errors";
+import { AppError } from "@/lib/errors";
 
 export type SuccessResponse<T> = { data: T };
 export type ErrorResponse = {
