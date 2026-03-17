@@ -1,20 +1,12 @@
 import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
-import { ZodError } from "zod";
 
 import { errorResponse, successResponse } from "@/lib/api-response";
 import { createUser, findUserByEmail } from "@/lib/db/users";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { registerSchema } from "@/lib/validations/auth";
-
-function fieldErrorsFromZod(error: ZodError) {
-  const flattened = error.flatten().fieldErrors as Record<string, string[] | undefined>;
-
-  return Object.fromEntries(
-    Object.entries(flattened).map(([field, messages]) => [field, messages?.[0] ?? "Invalid value"]),
-  );
-}
+import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 
 export async function POST(request: Request) {
   try {

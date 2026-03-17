@@ -1,10 +1,46 @@
-generated: 2026-03-16T07:35:00Z
+# generated: 2026-03-17T17:01:00Z
+# project: Linkboard
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: /home/clawd/projects/linkboard-shortener/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-03-17T17:01:00Z
 project: Linkboard
-project_key: LINKBOARD
+project_key: NOKEY
 tracking_system: file-system
 story_location: "/home/clawd/projects/linkboard-shortener/_bmad-output/implementation-artifacts"
 
 development_status:
+  # Epic 1: Project Foundation & User Authentication
   epic-1: done
   1-1-project-initialization-and-dev-environment: done
   1-2-database-schema-and-prisma-setup-for-users: done
@@ -14,3 +50,56 @@ development_status:
   1-6-password-reset-via-email: done
   1-7-user-profile-management: done
   epic-1-retrospective: optional
+
+  # Epic 2: Link Management & URL Shortening
+  epic-2: in-progress
+  2-1-create-short-links-with-auto-generated-slugs: done
+  2-2-custom-slug-support-and-validation: backlog
+  2-3-link-metadata-management: backlog
+  2-4-link-expiration: backlog
+  2-5-update-link-target-url: backlog
+  2-6-delete-links: backlog
+  2-7-redirect-engine-with-redis-caching: backlog
+  2-8-link-library-with-search-and-filter: backlog
+  2-9-create-link-with-board-assignment: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Board Organization
+  epic-3: backlog
+  3-1-create-boards-with-visibility-controls: backlog
+  3-2-edit-and-delete-boards: backlog
+  3-3-add-and-remove-links-from-boards: backlog
+  3-4-reorder-links-within-a-board: backlog
+  3-5-board-detail-view-with-link-metadata: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Dashboard & Navigation
+  epic-4: backlog
+  4-1-dashboard-layout-and-sidebar-navigation: backlog
+  4-2-dashboard-home-with-overview-and-quick-actions: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Public Board Experience
+  epic-5: backlog
+  5-1-public-board-server-side-rendering: backlog
+  5-2-open-graph-and-twitter-card-meta-tags: backlog
+  5-3-mobile-optimized-public-board-layout: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: Link Analytics
+  epic-6: backlog
+  6-1-click-event-capture-during-redirects: backlog
+  6-2-link-analytics-dashboard-clicks-and-trends: backlog
+  6-3-referrer-and-geographic-analytics: backlog
+  6-4-board-level-aggregate-analytics: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: API Access & Developer Experience
+  epic-7: backlog
+  7-1-api-key-generation-and-management: backlog
+  7-2-links-rest-api-endpoints: backlog
+  7-3-boards-and-board-links-rest-api-endpoints: backlog
+  7-4-analytics-rest-api-endpoints: backlog
+  7-5-api-rate-limiting: backlog
+  7-6-openapi-documentation: backlog
+  epic-7-retrospective: optional

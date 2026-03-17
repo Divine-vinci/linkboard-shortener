@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: 1.7 User Profile Management (DONE)
+- Current story: Story 2.1 Create Short Links with Auto-Generated Slugs
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Story 1.7 committed and pushed after fallback code review fix; Epic 1 implementation is complete.
-- Next step: Wait for /deploy
+- Last action: Resumed stalled work; dev-story for Story 2.1 completed, artifact saved, workflow finalized, and code-review ACP session agent:claude:acp:9a4c0d95-72d5-4a51-baab-60a9711ac6b0 launched.
+- Next step: Poll ACP session agent:claude:acp:9a4c0d95-72d5-4a51-baab-60a9711ac6b0 for code-review completion
 
 ## Active Dev Session
 - subagent_session_key: agent:main:subagent:d45abccc-58e3-4dc0-8d9b-4183aecf2143
@@ -17,7 +17,23 @@
 - subagent_workflow: dev-story
 - subagent_status: completed
 
+## Current Active Dev Session
+- subagent_session_key: agent:main:subagent:7dcb8963-d647-43be-877b-f4493b6adaa9
+- subagent_started_at: 2026-03-17T18:00:00Z
+- subagent_workflow: dev-story
+- subagent_status: running
+
+## Current ACP Session
+- acp_session_key: agent:claude:acp:9a4c0d95-72d5-4a51-baab-60a9711ac6b0
+- acp_started_at: 2026-03-17T18:30:00Z
+- acp_workflow: code-review
+- acp_status: running
+
 ## ACP Sessions
+- acp_session_key: agent:claude:acp:966622a3-262a-4bdd-a7c4-f2a25bdbd05f
+- acp_started_at: 2026-03-17T17:31:00Z
+- acp_workflow: create-story
+- acp_status: running
 - acp_session_key: agent:claude:acp:85ddcd31-e819-42eb-9d06-68fa715cd140
 - acp_started_at: 2026-03-17T12:30:54Z
 - acp_workflow: create-story
@@ -39,6 +55,15 @@
 - [x] Story 1.5: OAuth Login GitHub and Google (commit: 79d32a3)
 - [x] Story 1.6: Password Reset via Email (commit: 987f3a4)
 - [x] Story 1.7: User Profile Management (commit: fc71ae6)
+- [ ] Story 2.1: Create Short Links with Auto-Generated Slugs
+- [ ] Story 2.2: Custom Slug Support and Validation
+- [ ] Story 2.3: Link Metadata Management
+- [ ] Story 2.4: Link Expiration
+- [ ] Story 2.5: Update Link Target URL
+- [ ] Story 2.6: Delete Links
+- [ ] Story 2.7: Redirect Engine with Redis Caching
+- [ ] Story 2.8: Link Library with Search and Filter
+- [ ] Story 2.9: Create Link with Board Assignment
 
 ## Completed Workflows
 - [x] project initialization

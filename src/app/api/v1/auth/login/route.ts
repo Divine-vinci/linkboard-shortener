@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
-import { ZodError } from "zod";
 
 import { errorResponse, successResponse } from "@/lib/api-response";
 import { findUserByEmail } from "@/lib/db/users";
@@ -13,18 +12,11 @@ import {
   resetRateLimit,
 } from "@/lib/rate-limit";
 import { loginSchema } from "@/lib/validations/auth";
+import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 
 const MAX_FAILED_ATTEMPTS = 10;
 const WINDOW_MS = 15 * 60 * 1000;
 const INVALID_CREDENTIALS_MESSAGE = "Invalid email or password";
-
-function fieldErrorsFromZod(error: ZodError) {
-  const flattened = error.flatten().fieldErrors as Record<string, string[] | undefined>;
-
-  return Object.fromEntries(
-    Object.entries(flattened).map(([field, messages]) => [field, messages?.[0] ?? "Invalid value"]),
-  );
-}
 
 function unauthorizedResponse() {
   return NextResponse.json(

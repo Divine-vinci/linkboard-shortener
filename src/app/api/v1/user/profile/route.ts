@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { ZodError } from "zod";
 
 import { errorResponse, successResponse } from "@/lib/api-response";
 import { auth } from "@/lib/auth/config";
 import { findUserById, updateUser } from "@/lib/db/users";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 import { updateProfileSchema } from "@/lib/validations/profile";
 
 type SafeProfile = {
@@ -15,14 +15,6 @@ type SafeProfile = {
   image: string | null;
   createdAt: Date;
 };
-
-function fieldErrorsFromZod(error: ZodError) {
-  const flattened = error.flatten().fieldErrors as Record<string, string[] | undefined>;
-
-  return Object.fromEntries(
-    Object.entries(flattened).map(([field, messages]) => [field, messages?.[0] ?? "Invalid value"]),
-  );
-}
 
 function toProfileResponse(user: SafeProfile) {
   return {

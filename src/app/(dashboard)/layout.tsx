@@ -1,7 +1,12 @@
 import Link from "next/link";
 
-import { auth } from "@/lib/auth/config";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { auth } from "@/lib/auth/config";
+
+const navigationItems = [
+  { href: "/dashboard/links", label: "Links" },
+  { href: "/dashboard/settings", label: "Settings" },
+];
 
 export default async function DashboardLayout({
   children,
@@ -23,13 +28,16 @@ export default async function DashboardLayout({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <nav aria-label="Dashboard navigation">
-            <Link
-              href="/dashboard/settings"
-              className="rounded-2xl border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-100 transition hover:border-emerald-400 hover:text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
-            >
-              Settings
-            </Link>
+          <nav aria-label="Dashboard navigation" className="flex items-center gap-3">
+            {navigationItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-2xl border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-100 transition hover:border-emerald-400 hover:text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+              >
+                {item.label}
+              </Link>
+            ))}
           </nav>
           <LogoutButton />
         </div>

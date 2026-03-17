@@ -1,0 +1,24 @@
+## Dev Story Progress
+- Story: 2.1 Create Short Links with Auto-Generated Slugs
+- Implemented AC1-AC3 across schema, API, DB layer, validation, UI, and navigation.
+- Added migration artifact: `prisma/migrations/20260317181000_add_links_table/migration.sql`.
+- Added dependency: `nanoid`.
+- Validation: `npm test` ✅ (102 passed, 4 skipped); `npm run lint` ✅.
+- Note: `npx prisma migrate dev --name add-links-table` could not be applied against the configured Supabase database because Prisma detected drift/cross-schema state in remote `auth/public`; migration SQL was created manually and Prisma Client was regenerated via `npx prisma generate`.
+- Files touched:
+  - `prisma/schema.prisma`
+  - `prisma/migrations/20260317181000_add_links_table/migration.sql`
+  - `package.json`
+  - `package-lock.json`
+  - `src/lib/slug.ts`
+  - `src/lib/slug.test.ts`
+  - `src/lib/validations/link.ts`
+  - `src/lib/validations/link.test.ts`
+  - `src/lib/db/links.ts`
+  - `src/lib/db/links.test.ts`
+  - `src/app/api/v1/links/route.ts`
+  - `src/app/api/v1/links/route.test.ts`
+  - `src/components/links/create-link-form.tsx`
+  - `src/components/links/create-link-form.test.tsx`
+  - `src/app/(dashboard)/links/page.tsx`
+  - `src/app/(dashboard)/layout.tsx`

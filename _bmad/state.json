@@ -164,6 +164,31 @@
       "agentId": "dev",
       "outputFile": "/home/clawd/projects/linkboard-shortener/_bmad-output/implementation-artifacts/1-7-code-review.md",
       "completedAt": "2026-03-17T15:04:38.005Z"
+    },
+    {
+      "id": "sprint-planning",
+      "agentId": "sm",
+      "outputFile": "",
+      "completedAt": "2026-03-17T17:30:29.870Z"
+    },
+    {
+      "id": "create-story",
+      "agentId": "sm",
+      "agentName": "Bob",
+      "outputFile": "/home/clawd/projects/linkboard-shortener/_bmad-output/implementation-artifacts/2-1-create-short-links-with-auto-generated-slugs.md",
+      "completedAt": "2026-03-17T17:31:00.000Z"
+    },
+    {
+      "id": "dev-story",
+      "agentId": "dev",
+      "outputFile": "/home/clawd/projects/linkboard-shortener/_bmad-output/implementation-artifacts/2-1-dev-story-result.md",
+      "completedAt": "2026-03-17T18:11:06.720Z"
+    },
+    {
+      "id": "code-review",
+      "agentId": "dev",
+      "outputFile": "",
+      "completedAt": "2026-03-17T19:00:51.039Z"
     }
   ]
 }

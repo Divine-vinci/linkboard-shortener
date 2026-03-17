@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { ZodError } from "zod";
 
 import { env } from "@/config/env";
 import { errorResponse, successResponse } from "@/lib/api-response";
@@ -14,19 +13,12 @@ import {
   recordRateLimitFailure,
 } from "@/lib/rate-limit";
 import { forgotPasswordSchema } from "@/lib/validations/auth";
+import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 
 const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 15 * 60 * 1000;
 const SUCCESS_MESSAGE =
   "If an account exists for that email, we've sent a password reset link.";
-
-function fieldErrorsFromZod(error: ZodError) {
-  const flattened = error.flatten().fieldErrors as Record<string, string[] | undefined>;
-
-  return Object.fromEntries(
-    Object.entries(flattened).map(([field, messages]) => [field, messages?.[0] ?? "Invalid value"]),
-  );
-}
 
 function rateLimitedResponse(retryAfter: number) {
   return NextResponse.json(
