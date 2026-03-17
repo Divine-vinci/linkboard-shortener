@@ -19,6 +19,7 @@ const MAX_TITLE_LENGTH = 120;
 const MAX_DESCRIPTION_LENGTH = 500;
 const MAX_TAG_LENGTH = 24;
 const MAX_TAG_COUNT = 8;
+const EXPIRATION_MIN_FUTURE_MS = 60_000;
 
 const httpUrlSchema = z
   .string({ error: "Target URL is required" })
@@ -72,6 +73,37 @@ export const optionalDescriptionSchema = z.preprocess(
     .min(1)
     .max(MAX_DESCRIPTION_LENGTH, `Description must be at most ${MAX_DESCRIPTION_LENGTH} characters`)
     .optional(),
+);
+
+const isoDateTimeSchema = z
+  .string()
+  .datetime({ offset: true, message: "Enter a valid ISO 8601 datetime" })
+  .transform((value) => new Date(value))
+  .refine(
+    (value) => value.getTime() > Date.now() + EXPIRATION_MIN_FUTURE_MS,
+    "Expiration must be in the future",
+  );
+
+export const optionalExpiresAtSchema = z.preprocess(
+  emptyStringToUndefined,
+  isoDateTimeSchema.optional(),
+);
+
+function emptyStringToNull(value: unknown) {
+  if (value === null) {
+    return null;
+  }
+
+  if (typeof value === "string" && value.trim() === "") {
+    return null;
+  }
+
+  return value;
+}
+
+const nullableExpiresAtSchema = z.preprocess(
+  emptyStringToNull,
+  z.union([isoDateTimeSchema, z.null()]).optional(),
 );
 
 const tagValueSchema = z
@@ -145,19 +177,8 @@ export const createLinkSchema = z.object({
   title: optionalTitleSchema,
   description: optionalDescriptionSchema,
   tags: optionalTagsSchema,
+  expiresAt: optionalExpiresAtSchema,
 });
-
-function emptyStringToNull(value: unknown) {
-  if (value === null) {
-    return null;
-  }
-
-  if (typeof value === "string" && value.trim() === "") {
-    return null;
-  }
-
-  return value;
-}
 
 const nullableTitleSchema = z.preprocess(
   emptyStringToNull,
@@ -189,11 +210,18 @@ const nullableTagsSchema = z.preprocess(
     .optional(),
 );
 
-export const updateLinkMetadataSchema = z
-  .object({
-    title: nullableTitleSchema,
-    description: nullableDescriptionSchema,
-    tags: nullableTagsSchema,
+const updateLinkFieldsSchema = z.object({
+  title: nullableTitleSchema,
+  description: nullableDescriptionSchema,
+  tags: nullableTagsSchema,
+  expiresAt: nullableExpiresAtSchema,
+});
+
+export const updateLinkMetadataSchema = updateLinkFieldsSchema
+  .pick({
+    title: true,
+    description: true,
+    tags: true,
   })
   .refine(
     (value) => value.title !== undefined || value.description !== undefined || value.tags !== undefined,
@@ -203,7 +231,21 @@ export const updateLinkMetadataSchema = z
     },
   );
 
+export const updateLinkExpirationSchema = updateLinkFieldsSchema.refine(
+  (value) =>
+    value.title !== undefined ||
+    value.description !== undefined ||
+    value.tags !== undefined ||
+    value.expiresAt !== undefined,
+  {
+    message: "At least one link field is required",
+    path: [],
+  },
+);
+
 export type CreateLinkSchemaInput = z.input<typeof createLinkSchema>;
 export type CreateLinkInput = z.output<typeof createLinkSchema>;
 export type UpdateLinkMetadataSchemaInput = z.input<typeof updateLinkMetadataSchema>;
 export type UpdateLinkMetadataInput = z.output<typeof updateLinkMetadataSchema>;
+export type UpdateLinkExpirationSchemaInput = z.input<typeof updateLinkExpirationSchema>;
+export type UpdateLinkExpirationInput = z.output<typeof updateLinkExpirationSchema>;

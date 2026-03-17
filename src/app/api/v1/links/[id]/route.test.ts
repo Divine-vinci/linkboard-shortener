@@ -74,6 +74,7 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
         title: "Updated title",
         description: "New notes",
         tags: ["updated", "docs"],
+        expiresAt: null,
         userId: "user-123",
         createdAt: "2026-03-17T18:00:00.000Z",
         updatedAt: "2026-03-17T18:00:00.000Z",
@@ -102,6 +103,107 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
     });
   });
 
+  it("sets expiration on a link", async () => {
+    const expiresAt = "2099-03-22T12:00:00.000Z";
+
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.updateLink).mockResolvedValue(buildLink({ expiresAt: new Date(expiresAt) }));
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "PATCH",
+        body: JSON.stringify({ expiresAt }),
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(links.updateLink).toHaveBeenCalledWith("link-123", "user-123", {
+      expiresAt: new Date(expiresAt),
+    });
+    await expect(response.json()).resolves.toEqual({
+      data: expect.objectContaining({
+        expiresAt,
+      }),
+    });
+  });
+
+  it("changes expiration on a link", async () => {
+    const expiresAt = "2099-03-25T18:30:00.000Z";
+
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.updateLink).mockResolvedValue(buildLink({ expiresAt: new Date(expiresAt) }));
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "PATCH",
+        body: JSON.stringify({ expiresAt }),
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(links.updateLink).toHaveBeenCalledWith("link-123", "user-123", {
+      expiresAt: new Date(expiresAt),
+    });
+  });
+
+  it("clears metadata fields when null is sent", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.updateLink).mockResolvedValue(
+      buildLink({ title: null, description: null, tags: [] }),
+    );
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "PATCH",
+        body: JSON.stringify({ title: null, tags: [] }),
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(links.updateLink).toHaveBeenCalledWith("link-123", "user-123", {
+      title: null,
+      tags: [],
+    });
+  });
+
+  it("clears expiration when null is sent", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.updateLink).mockResolvedValue(buildLink({ expiresAt: null }));
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "PATCH",
+        body: JSON.stringify({ expiresAt: null }),
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(links.updateLink).toHaveBeenCalledWith("link-123", "user-123", {
+      expiresAt: null,
+    });
+    await expect(response.json()).resolves.toEqual({
+      data: expect.objectContaining({
+        expiresAt: null,
+      }),
+    });
+  });
+
   it("returns 400 for invalid metadata payloads", async () => {
     vi.mocked(mockedAuth).mockResolvedValue({
       user: { id: "user-123", email: "user@example.com" },
@@ -124,6 +226,35 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
         details: {
           fields: {
             tags: "Each tag must be at most 24 characters",
+          },
+        },
+      },
+    });
+    expect(links.updateLink).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for past expiration payloads", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "PATCH",
+        body: JSON.stringify({ expiresAt: "2020-03-20T15:30:00.000Z" }),
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid link metadata input",
+        details: {
+          fields: {
+            expiresAt: "Expiration must be in the future",
           },
         },
       },
@@ -167,30 +298,6 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
 
     expect(response.status).toBe(400);
     expect(links.updateLink).not.toHaveBeenCalled();
-  });
-
-  it("clears metadata fields when null is sent", async () => {
-    vi.mocked(mockedAuth).mockResolvedValue({
-      user: { id: "user-123", email: "user@example.com" },
-      expires: "2026-03-18T18:00:00.000Z",
-    });
-    vi.mocked(links.updateLink).mockResolvedValue(
-      buildLink({ title: null, description: null, tags: [] }),
-    );
-
-    const response = await PATCH(
-      new Request("http://localhost:3000/api/v1/links/link-123", {
-        method: "PATCH",
-        body: JSON.stringify({ title: null, tags: [] }),
-      }),
-      { params: Promise.resolve({ id: "link-123" }) },
-    );
-
-    expect(response.status).toBe(200);
-    expect(links.updateLink).toHaveBeenCalledWith("link-123", "user-123", {
-      title: null,
-      tags: [],
-    });
   });
 
   it("returns 404 when the link does not exist or is not owned by the user", async () => {

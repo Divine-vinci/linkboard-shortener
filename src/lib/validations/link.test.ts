@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   createLinkSchema,
   customSlugSchema,
+  optionalExpiresAtSchema,
   RESERVED_SLUGS,
+  updateLinkExpirationSchema,
   updateLinkMetadataSchema,
 } from "@/lib/validations/link";
 
@@ -117,12 +119,14 @@ describe("src/lib/validations/link.ts", () => {
 
   describe("createLinkSchema with metadata", () => {
     it("accepts a request with valid customSlug and metadata", () => {
+      const expiresAt = "2099-03-20T15:30:00.000Z";
       const result = createLinkSchema.parse({
         targetUrl: "https://example.com",
         customSlug: "my-link",
         title: "  Product launch  ",
         description: "  Keep this handy for rollout day.  ",
         tags: [" Docs ", "launch", "docs", ""],
+        expiresAt,
       });
 
       expect(result).toEqual({
@@ -131,6 +135,7 @@ describe("src/lib/validations/link.ts", () => {
         title: "Product launch",
         description: "Keep this handy for rollout day.",
         tags: ["docs", "launch"],
+        expiresAt: new Date(expiresAt),
       });
     });
 
@@ -151,6 +156,7 @@ describe("src/lib/validations/link.ts", () => {
         title: "   ",
         description: "  ",
         tags: [],
+        expiresAt: "   ",
       });
 
       expect(result).toEqual({
@@ -181,6 +187,36 @@ describe("src/lib/validations/link.ts", () => {
         expect(parsed.error.flatten().fieldErrors.tags).toContain(
           "Each tag must be at most 24 characters",
         );
+      }
+    });
+  });
+
+  describe("optionalExpiresAtSchema", () => {
+    it("accepts a valid future ISO datetime", () => {
+      const expiresAt = "2099-03-20T15:30:00.000Z";
+
+      expect(optionalExpiresAtSchema.parse(expiresAt)).toEqual(new Date(expiresAt));
+    });
+
+    it("rejects past datetimes", () => {
+      const parsed = optionalExpiresAtSchema.safeParse("2020-03-20T15:30:00.000Z");
+
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.flatten().formErrors).toContain("Expiration must be in the future");
+      }
+    });
+
+    it("accepts undefined to skip expiration", () => {
+      expect(optionalExpiresAtSchema.parse(undefined)).toBeUndefined();
+    });
+
+    it("rejects invalid datetime formats", () => {
+      const parsed = optionalExpiresAtSchema.safeParse("2026-03-20T15:30");
+
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.flatten().formErrors).toContain("Enter a valid ISO 8601 datetime");
       }
     });
   });
@@ -219,6 +255,38 @@ describe("src/lib/validations/link.ts", () => {
 
     it("accepts empty array to clear all tags", () => {
       expect(updateLinkMetadataSchema.parse({ tags: [] })).toEqual({ tags: [] });
+    });
+  });
+
+  describe("updateLinkExpirationSchema", () => {
+    it("accepts future expiration updates", () => {
+      const expiresAt = "2099-03-22T12:00:00.000Z";
+
+      expect(updateLinkExpirationSchema.parse({ expiresAt })).toEqual({
+        expiresAt: new Date(expiresAt),
+      });
+    });
+
+    it("accepts null to clear expiration", () => {
+      expect(updateLinkExpirationSchema.parse({ expiresAt: null })).toEqual({ expiresAt: null });
+    });
+
+    it("rejects past expiration updates", () => {
+      const parsed = updateLinkExpirationSchema.safeParse({ expiresAt: "2020-03-20T15:30:00.000Z" });
+
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.flatten().fieldErrors.expiresAt).toContain("Expiration must be in the future");
+      }
+    });
+
+    it("rejects an empty patch body", () => {
+      const parsed = updateLinkExpirationSchema.safeParse({});
+
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.flatten().formErrors).toContain("At least one link field is required");
+      }
     });
   });
 });

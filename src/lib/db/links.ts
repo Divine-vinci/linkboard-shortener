@@ -3,11 +3,12 @@ import type { Link } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 
 export type LinkMetadataData = Pick<Link, "title" | "description" | "tags">;
-export type CreateLinkData = Pick<Link, "slug" | "targetUrl" | "userId"> & Partial<LinkMetadataData>;
+export type CreateLinkData = Pick<Link, "slug" | "targetUrl" | "userId"> & Partial<LinkMetadataData> & { expiresAt?: Date | null };
 export type UpdateLinkData = {
   title?: string | null;
   description?: string | null;
   tags?: string[];
+  expiresAt?: Date | null;
 };
 
 export async function createLink(data: CreateLinkData) {

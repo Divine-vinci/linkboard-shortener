@@ -6,7 +6,7 @@ import { updateLink } from "@/lib/db/links";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
-import { updateLinkMetadataSchema } from "@/lib/validations/link";
+import { updateLinkExpirationSchema } from "@/lib/validations/link";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -22,7 +22,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   try {
     const { id } = await context.params;
     const json = await request.json();
-    const parsed = updateLinkMetadataSchema.safeParse(json);
+    const parsed = updateLinkExpirationSchema.safeParse(json);
 
     if (!parsed.success) {
       return NextResponse.json(

@@ -61,6 +61,7 @@ describe.skipIf(!dbReady)("src/lib/db/links.ts", () => {
     });
     createdUserIds.push(user.id);
 
+    const expiresAt = new Date(Date.now() + 86_400_000);
     const link = await createLink({
       slug: `a${randomUUID().replace(/-/g, "").slice(0, 6)}`,
       targetUrl: "https://example.com/docs",
@@ -68,6 +69,7 @@ describe.skipIf(!dbReady)("src/lib/db/links.ts", () => {
       title: "Docs",
       description: "Important docs",
       tags: ["docs"],
+      expiresAt,
     });
     createdLinkIds.push(link.id);
 
@@ -79,6 +81,7 @@ describe.skipIf(!dbReady)("src/lib/db/links.ts", () => {
       title: "Docs",
       description: "Important docs",
       tags: ["docs"],
+      expiresAt,
     });
   });
 
@@ -91,20 +94,24 @@ describe.skipIf(!dbReady)("src/lib/db/links.ts", () => {
     });
     createdUserIds.push(owner.id, otherUser.id);
 
+    const initialExpiresAt = new Date(Date.now() + 86_400_000);
     const link = await createLink({
       slug: `b${randomUUID().replace(/-/g, "").slice(0, 6)}`,
       targetUrl: "https://example.com/start",
       userId: owner.id,
+      expiresAt: initialExpiresAt,
     });
     createdLinkIds.push(link.id);
 
     await expect(findLinkById(link.id, owner.id)).resolves.toMatchObject({ id: link.id });
     await expect(findLinkById(link.id, otherUser.id)).resolves.toBeNull();
 
+    const updatedExpiresAt = new Date(Date.now() + 172_800_000);
     const updated = await updateLink(link.id, owner.id, {
       title: "Updated title",
       description: "Updated description",
       tags: ["docs", "launch"],
+      expiresAt: updatedExpiresAt,
     });
 
     expect(updated).toMatchObject({
@@ -112,6 +119,13 @@ describe.skipIf(!dbReady)("src/lib/db/links.ts", () => {
       title: "Updated title",
       description: "Updated description",
       tags: ["docs", "launch"],
+      expiresAt: updatedExpiresAt,
+    });
+
+    const cleared = await updateLink(link.id, owner.id, { expiresAt: null });
+    expect(cleared).toMatchObject({
+      id: link.id,
+      expiresAt: null,
     });
 
     await expect(updateLink(link.id, otherUser.id, { title: "No access" })).resolves.toBeNull();
@@ -127,11 +141,13 @@ describe.skipIf(!dbReady)("src/lib/db/links.ts", () => {
       slug: `a${randomUUID().replace(/-/g, "").slice(0, 6)}`,
       targetUrl: "https://example.com/first",
       userId: user.id,
+      expiresAt: null,
     });
     const second = await createLink({
       slug: `b${randomUUID().replace(/-/g, "").slice(0, 6)}`,
       targetUrl: "https://example.com/second",
       userId: user.id,
+      expiresAt: null,
     });
     createdLinkIds.push(first.id, second.id);
 

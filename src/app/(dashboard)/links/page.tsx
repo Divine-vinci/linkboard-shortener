@@ -4,6 +4,7 @@ import { CreateLinkForm } from "@/components/links/create-link-form";
 import { LinkLibrary } from "@/components/links/link-library";
 import { auth } from "@/lib/auth/config";
 import { findLinksByUserId } from "@/lib/db/links";
+import { getCurrentTimeMs } from "@/lib/time";
 
 export const metadata: Metadata = {
   title: "Links — Linkboard",
@@ -13,6 +14,7 @@ export default async function LinksPage() {
   const session = await auth();
   const userId = session?.user?.id;
   const links = userId ? await findLinksByUserId(userId) : [];
+  const currentTimeMs = getCurrentTimeMs();
 
   return (
     <section className="space-y-6">
@@ -24,7 +26,7 @@ export default async function LinksPage() {
       </div>
 
       <CreateLinkForm />
-      <LinkLibrary links={links} />
+      <LinkLibrary links={links} currentTimeMs={currentTimeMs} />
     </section>
   );
 }

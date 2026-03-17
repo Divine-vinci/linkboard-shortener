@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import {
   createLinkSchema,
@@ -18,6 +18,7 @@ type CreateLinkResponse = {
     title: string | null;
     description: string | null;
     tags: string[];
+    expiresAt: string | null;
     userId: string;
     createdAt: string;
     updatedAt: string;
@@ -52,6 +53,7 @@ function normalizeTagsInput(value: string) {
   return normalized;
 }
 
+
 export function CreateLinkForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [createdUrl, setCreatedUrl] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export function CreateLinkForm() {
     handleSubmit,
     reset,
     setError,
-    watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CreateLinkSchemaInput, unknown, CreateLinkInput>({
     resolver: zodResolver(createLinkSchema),
@@ -71,10 +73,11 @@ export function CreateLinkForm() {
       title: "",
       description: "",
       tags: "" as unknown as string[],
+      expiresAt: "" as unknown as Date,
     },
   });
 
-  const customSlugValue = (watch("customSlug") ?? "") as string;
+  const customSlugValue = (useWatch({ control, name: "customSlug" }) ?? "") as string;
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
@@ -102,6 +105,10 @@ export function CreateLinkForm() {
 
     if (normalizedTags.length > 0) {
       body.tags = normalizedTags;
+    }
+
+    if (values.expiresAt) {
+      body.expiresAt = values.expiresAt.toISOString();
     }
 
     try {
@@ -139,6 +146,10 @@ export function CreateLinkForm() {
           setError("tags", { message: fieldErrors.tags });
         }
 
+        if (fieldErrors?.expiresAt) {
+          setError("expiresAt", { message: fieldErrors.expiresAt });
+        }
+
         if (payload.error?.code === "CONFLICT") {
           setError("customSlug", { message: "Custom slug already exists" });
         }
@@ -156,7 +167,7 @@ export function CreateLinkForm() {
       }
 
       setCreatedUrl(buildShortUrl(payload.data.slug));
-      reset({ targetUrl: "", customSlug: "", title: "", description: "", tags: [] });
+      reset({ targetUrl: "", customSlug: "", title: "", description: "", tags: [], expiresAt: "" as unknown as Date });
     } catch {
       setFormError("Unable to create link right now. Please check your connection and try again.");
     }
@@ -287,6 +298,26 @@ export function CreateLinkForm() {
             <p className="text-sm text-rose-400">{errors.description.message}</p>
           ) : (
             <p className="text-xs text-zinc-500">Optional notes for extra context. Leave blank if you just need a short link.</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-zinc-200" htmlFor="expiresAt">
+            Expiration date <span className="text-zinc-500">(optional)</span>
+          </label>
+          <input
+            id="expiresAt"
+            type="datetime-local"
+            className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30"
+            aria-invalid={errors.expiresAt ? "true" : "false"}
+            {...register("expiresAt", {
+              setValueAs: (value: string) => (value ? new Date(value).toISOString() : value),
+            })}
+          />
+          {errors.expiresAt ? (
+            <p className="text-sm text-rose-400">{errors.expiresAt.message}</p>
+          ) : (
+            <p className="text-xs text-zinc-500">Leave empty if this link should never expire.</p>
           )}
         </div>
 

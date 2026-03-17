@@ -70,6 +70,7 @@ describe("src/app/api/v1/links/route.ts", () => {
         title: null,
         description: null,
         tags: [],
+        expiresAt: null,
         userId: "user-123",
         createdAt: "2026-03-17T18:00:00.000Z",
         updatedAt: "2026-03-17T18:00:00.000Z",
@@ -81,6 +82,7 @@ describe("src/app/api/v1/links/route.ts", () => {
       title: undefined,
       description: undefined,
       tags: undefined,
+      expiresAt: undefined,
       userId: "user-123",
     });
   });
@@ -120,6 +122,7 @@ describe("src/app/api/v1/links/route.ts", () => {
       title: "Launch plan",
       description: "Docs to share during rollout.",
       tags: ["docs", "launch"],
+      expiresAt: undefined,
       userId: "user-123",
     });
     await expect(response.json()).resolves.toEqual({
@@ -130,6 +133,59 @@ describe("src/app/api/v1/links/route.ts", () => {
         title: "Launch plan",
         description: "Docs to share during rollout.",
         tags: ["docs", "launch"],
+        expiresAt: null,
+        userId: "user-123",
+        createdAt: "2026-03-17T18:00:00.000Z",
+        updatedAt: "2026-03-17T18:00:00.000Z",
+      },
+    });
+  });
+
+  it("creates a link with expiration and returns it in the response", async () => {
+    const expiresAt = "2099-03-20T15:30:00.000Z";
+
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(slug.generateSlug).mockReturnValue("exp1234");
+    vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
+    vi.mocked(links.createLink).mockResolvedValue(
+      buildLink({
+        slug: "exp1234",
+        expiresAt: new Date(expiresAt),
+      }),
+    );
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({
+          targetUrl: "https://example.com",
+          expiresAt,
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(links.createLink).toHaveBeenCalledWith({
+      slug: "exp1234",
+      targetUrl: "https://example.com",
+      title: undefined,
+      description: undefined,
+      tags: undefined,
+      expiresAt: new Date(expiresAt),
+      userId: "user-123",
+    });
+    await expect(response.json()).resolves.toEqual({
+      data: {
+        id: "link-123",
+        slug: "exp1234",
+        targetUrl: "https://example.com",
+        title: null,
+        description: null,
+        tags: [],
+        expiresAt,
         userId: "user-123",
         createdAt: "2026-03-17T18:00:00.000Z",
         updatedAt: "2026-03-17T18:00:00.000Z",
@@ -158,6 +214,61 @@ describe("src/app/api/v1/links/route.ts", () => {
         details: {
           fields: {
             targetUrl: "URL must start with http:// or https://",
+          },
+        },
+      },
+    });
+    expect(links.createLink).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for invalid expiration format", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({ targetUrl: "https://example.com", expiresAt: "2026-03-20T15:30" }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid link input",
+        details: {
+          fields: {
+            expiresAt: "Enter a valid ISO 8601 datetime",
+          },
+        },
+      },
+    });
+  });
+
+  it("returns 400 for past expiration", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({ targetUrl: "https://example.com", expiresAt: "2020-03-20T15:30:00.000Z" }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid link input",
+        details: {
+          fields: {
+            expiresAt: "Expiration must be in the future",
           },
         },
       },
@@ -210,6 +321,7 @@ describe("src/app/api/v1/links/route.ts", () => {
         title: null,
         description: null,
         tags: [],
+        expiresAt: null,
         userId: "user-123",
         createdAt: "2026-03-17T18:00:00.000Z",
         updatedAt: "2026-03-17T18:00:00.000Z",
@@ -221,6 +333,7 @@ describe("src/app/api/v1/links/route.ts", () => {
       title: undefined,
       description: undefined,
       tags: undefined,
+      expiresAt: undefined,
       userId: "user-123",
     });
     expect(slug.generateSlug).not.toHaveBeenCalled();
@@ -319,6 +432,7 @@ describe("src/app/api/v1/links/route.ts", () => {
       title: undefined,
       description: undefined,
       tags: undefined,
+      expiresAt: undefined,
       userId: "user-123",
     });
     expect(links.createLink).toHaveBeenNthCalledWith(2, {
@@ -327,6 +441,7 @@ describe("src/app/api/v1/links/route.ts", () => {
       title: undefined,
       description: undefined,
       tags: undefined,
+      expiresAt: undefined,
       userId: "user-123",
     });
   });

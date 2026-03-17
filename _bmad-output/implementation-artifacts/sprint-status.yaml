@@ -56,7 +56,7 @@ development_status:
   2-1-create-short-links-with-auto-generated-slugs: done
   2-2-custom-slug-support-and-validation: done
   2-3-link-metadata-management: done
-  2-4-link-expiration: backlog
+  2-4-link-expiration: done
   2-5-update-link-target-url: backlog
   2-6-delete-links: backlog
   2-7-redirect-engine-with-redis-caching: backlog

@@ -35,6 +35,7 @@ async function createLinkWithGeneratedSlug(data: {
   title?: string;
   description?: string;
   tags?: string[];
+  expiresAt?: Date;
   userId: string;
 }) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -47,6 +48,7 @@ async function createLinkWithGeneratedSlug(data: {
         title: data.title,
         description: data.description,
         tags: data.tags,
+        expiresAt: data.expiresAt,
         userId: data.userId,
       });
     } catch (error) {
@@ -103,6 +105,7 @@ export async function POST(request: Request) {
         title: parsed.data.title,
         description: parsed.data.description,
         tags: parsed.data.tags,
+        expiresAt: parsed.data.expiresAt,
         userId,
       });
     } else {
@@ -111,6 +114,7 @@ export async function POST(request: Request) {
         title: parsed.data.title,
         description: parsed.data.description,
         tags: parsed.data.tags,
+        expiresAt: parsed.data.expiresAt,
         userId,
       });
     }

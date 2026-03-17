@@ -3,7 +3,7 @@ import type { Link } from "@prisma/client";
 import { AppError } from "@/lib/errors";
 
 export function toLinkResponse(
-  link: Pick<Link, "id" | "slug" | "targetUrl" | "title" | "description" | "tags" | "userId" | "createdAt" | "updatedAt">,
+  link: Pick<Link, "id" | "slug" | "targetUrl" | "title" | "description" | "tags" | "expiresAt" | "userId" | "createdAt" | "updatedAt">,
 ) {
   return {
     id: link.id,
@@ -12,6 +12,7 @@ export function toLinkResponse(
     title: link.title,
     description: link.description,
     tags: link.tags,
+    expiresAt: link.expiresAt ? link.expiresAt.toISOString() : null,
     userId: link.userId,
     createdAt: link.createdAt,
     updatedAt: link.updatedAt,
