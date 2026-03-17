@@ -15,6 +15,9 @@ type CreateLinkResponse = {
     id: string;
     slug: string;
     targetUrl: string;
+    title: string | null;
+    description: string | null;
+    tags: string[];
     userId: string;
     createdAt: string;
     updatedAt: string;
@@ -36,6 +39,19 @@ function buildShortUrl(slug: string) {
   return `${window.location.origin}/${slug}`;
 }
 
+function normalizeTagsInput(value: string) {
+  const normalized = Array.from(
+    new Set(
+      value
+        .split(",")
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
+
+  return normalized;
+}
+
 export function CreateLinkForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [createdUrl, setCreatedUrl] = useState<string | null>(null);
@@ -52,6 +68,9 @@ export function CreateLinkForm() {
     defaultValues: {
       targetUrl: "",
       customSlug: "",
+      title: "",
+      description: "",
+      tags: [],
     },
   });
 
@@ -61,10 +80,28 @@ export function CreateLinkForm() {
     setFormError(null);
     setCopyFeedback(null);
 
-    const body: Record<string, string> = { targetUrl: values.targetUrl };
+    const tagsInput = Array.isArray(values.tags)
+      ? values.tags.join(", ")
+      : typeof values.tags === "string"
+        ? values.tags
+        : "";
+    const normalizedTags = normalizeTagsInput(tagsInput);
+    const body: Record<string, string | string[]> = { targetUrl: values.targetUrl };
 
     if (values.customSlug) {
       body.customSlug = values.customSlug;
+    }
+
+    if (values.title) {
+      body.title = values.title;
+    }
+
+    if (values.description) {
+      body.description = values.description;
+    }
+
+    if (normalizedTags.length > 0) {
+      body.tags = normalizedTags;
     }
 
     try {
@@ -90,6 +127,18 @@ export function CreateLinkForm() {
           setError("customSlug", { message: fieldErrors.customSlug });
         }
 
+        if (fieldErrors?.title) {
+          setError("title", { message: fieldErrors.title });
+        }
+
+        if (fieldErrors?.description) {
+          setError("description", { message: fieldErrors.description });
+        }
+
+        if (fieldErrors?.tags) {
+          setError("tags", { message: fieldErrors.tags });
+        }
+
         if (payload.error?.code === "CONFLICT") {
           setError("customSlug", { message: "Custom slug already exists" });
         }
@@ -107,7 +156,7 @@ export function CreateLinkForm() {
       }
 
       setCreatedUrl(buildShortUrl(payload.data.slug));
-      reset({ targetUrl: "", customSlug: "" });
+      reset({ targetUrl: "", customSlug: "", title: "", description: "", tags: [] });
     } catch {
       setFormError("Unable to create link right now. Please check your connection and try again.");
     }
@@ -130,7 +179,9 @@ export function CreateLinkForm() {
     <div className="space-y-6 rounded-3xl border border-zinc-800 bg-zinc-950/70 p-6">
       <div className="space-y-2">
         <h2 className="text-xl font-semibold text-zinc-100">Create a short link</h2>
-        <p className="text-sm text-zinc-400">Paste a destination URL and generate a short share link.</p>
+        <p className="text-sm text-zinc-400">
+          Paste a destination URL and optionally add metadata to organize it later.
+        </p>
       </div>
 
       <form className="space-y-5" onSubmit={onSubmit} noValidate>
@@ -175,6 +226,67 @@ export function CreateLinkForm() {
             </p>
           ) : (
             <p className="text-xs text-zinc-500">Leave empty to auto-generate a short slug.</p>
+          )}
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-200" htmlFor="title">
+              Title <span className="text-zinc-500">(optional)</span>
+            </label>
+            <input
+              id="title"
+              type="text"
+              autoComplete="off"
+              placeholder="Launch checklist"
+              className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30"
+              aria-invalid={errors.title ? "true" : "false"}
+              {...register("title")}
+            />
+            {errors.title ? (
+              <p className="text-sm text-rose-400">{errors.title.message}</p>
+            ) : (
+              <p className="text-xs text-zinc-500">Optional label to make the link easier to spot in your library.</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-200" htmlFor="tags">
+              Tags <span className="text-zinc-500">(optional)</span>
+            </label>
+            <input
+              id="tags"
+              type="text"
+              autoComplete="off"
+              placeholder="docs, launch, internal"
+              className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30"
+              aria-invalid={errors.tags ? "true" : "false"}
+              {...register("tags" as never)}
+            />
+            {errors.tags ? (
+              <p className="text-sm text-rose-400">{errors.tags.message}</p>
+            ) : (
+              <p className="text-xs text-zinc-500">Separate tags with commas. We&apos;ll trim, lowercase, and deduplicate them.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-zinc-200" htmlFor="description">
+            Description <span className="text-zinc-500">(optional)</span>
+          </label>
+          <textarea
+            id="description"
+            rows={3}
+            placeholder="Quick context about why you saved this link."
+            className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30"
+            aria-invalid={errors.description ? "true" : "false"}
+            {...register("description")}
+          />
+          {errors.description ? (
+            <p className="text-sm text-rose-400">{errors.description.message}</p>
+          ) : (
+            <p className="text-xs text-zinc-500">Optional notes for extra context. Leave blank if you just need a short link.</p>
           )}
         </div>
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { errorResponse, successResponse } from "@/lib/api-response";
+import { errorResponse, successResponse, toLinkResponse } from "@/lib/api-response";
 import { auth } from "@/lib/auth/config";
 import { createLink, findLinkBySlug } from "@/lib/db/links";
 import { AppError } from "@/lib/errors";
@@ -30,15 +30,24 @@ function isSlugUniqueConstraintError(error: unknown) {
   );
 }
 
-async function createLinkWithGeneratedSlug(targetUrl: string, userId: string) {
+async function createLinkWithGeneratedSlug(data: {
+  targetUrl: string;
+  title?: string;
+  description?: string;
+  tags?: string[];
+  userId: string;
+}) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const slug = await generateUniqueSlug();
 
     try {
       return await createLink({
         slug,
-        targetUrl,
-        userId,
+        targetUrl: data.targetUrl,
+        title: data.title,
+        description: data.description,
+        tags: data.tags,
+        userId: data.userId,
       });
     } catch (error) {
       if (isSlugUniqueConstraintError(error) && attempt < 2) {
@@ -91,23 +100,22 @@ export async function POST(request: Request) {
       link = await createLink({
         slug: parsed.data.customSlug,
         targetUrl: parsed.data.targetUrl,
+        title: parsed.data.title,
+        description: parsed.data.description,
+        tags: parsed.data.tags,
         userId,
       });
     } else {
-      link = await createLinkWithGeneratedSlug(parsed.data.targetUrl, userId);
+      link = await createLinkWithGeneratedSlug({
+        targetUrl: parsed.data.targetUrl,
+        title: parsed.data.title,
+        description: parsed.data.description,
+        tags: parsed.data.tags,
+        userId,
+      });
     }
 
-    return NextResponse.json(
-      successResponse({
-        id: link.id,
-        slug: link.slug,
-        targetUrl: link.targetUrl,
-        userId: link.userId,
-        createdAt: link.createdAt,
-        updatedAt: link.updatedAt,
-      }),
-      { status: 201 },
-    );
+    return NextResponse.json(successResponse(toLinkResponse(link)), { status: 201 });
   } catch (error) {
     if (error instanceof SyntaxError) {
       return NextResponse.json(
@@ -120,7 +128,6 @@ export async function POST(request: Request) {
       return NextResponse.json(errorResponse(error), { status: error.statusCode });
     }
 
-    // Handle Prisma unique constraint violation for custom slugs.
     if (isSlugUniqueConstraintError(error)) {
       return NextResponse.json(
         errorResponse(new AppError("CONFLICT", "Custom slug already exists", 409)),

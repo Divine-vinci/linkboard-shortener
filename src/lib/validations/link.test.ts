@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createLinkSchema, customSlugSchema, RESERVED_SLUGS } from "@/lib/validations/link";
+import {
+  createLinkSchema,
+  customSlugSchema,
+  RESERVED_SLUGS,
+  updateLinkMetadataSchema,
+} from "@/lib/validations/link";
 
 describe("src/lib/validations/link.ts", () => {
   it("accepts a valid http url", () => {
@@ -94,8 +99,6 @@ describe("src/lib/validations/link.ts", () => {
       for (const reserved of RESERVED_SLUGS) {
         const parsed = customSlugSchema.safeParse(reserved);
 
-        // Some reserved slugs may fail format validation (e.g., "b" is too short, "favicon.ico" has a dot)
-        // but those that pass format should fail the reserved word check
         expect(parsed.success).toBe(false);
       }
     });
@@ -112,20 +115,26 @@ describe("src/lib/validations/link.ts", () => {
     });
   });
 
-  describe("createLinkSchema with customSlug", () => {
-    it("accepts a request with valid customSlug", () => {
+  describe("createLinkSchema with metadata", () => {
+    it("accepts a request with valid customSlug and metadata", () => {
       const result = createLinkSchema.parse({
         targetUrl: "https://example.com",
         customSlug: "my-link",
+        title: "  Product launch  ",
+        description: "  Keep this handy for rollout day.  ",
+        tags: [" Docs ", "launch", "docs", ""],
       });
 
       expect(result).toEqual({
         targetUrl: "https://example.com",
         customSlug: "my-link",
+        title: "Product launch",
+        description: "Keep this handy for rollout day.",
+        tags: ["docs", "launch"],
       });
     });
 
-    it("accepts a request without customSlug", () => {
+    it("accepts a request without customSlug or metadata", () => {
       const result = createLinkSchema.parse({
         targetUrl: "https://example.com",
       });
@@ -135,10 +144,13 @@ describe("src/lib/validations/link.ts", () => {
       });
     });
 
-    it("treats an empty customSlug as omitted", () => {
+    it("treats empty optional metadata fields as omitted", () => {
       const result = createLinkSchema.parse({
         targetUrl: "https://example.com",
         customSlug: "",
+        title: "   ",
+        description: "  ",
+        tags: [],
       });
 
       expect(result).toEqual({
@@ -146,26 +158,52 @@ describe("src/lib/validations/link.ts", () => {
       });
     });
 
-    it("treats a whitespace-only customSlug as omitted", () => {
-      const result = createLinkSchema.parse({
-        targetUrl: "https://example.com",
-        customSlug: "   ",
-      });
-
-      expect(result).toEqual({
-        targetUrl: "https://example.com",
-      });
-    });
-
-    it("rejects invalid customSlug with field error", () => {
+    it("rejects too many tags", () => {
       const parsed = createLinkSchema.safeParse({
         targetUrl: "https://example.com",
-        customSlug: "a",
+        tags: ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"],
       });
 
       expect(parsed.success).toBe(false);
       if (!parsed.success) {
-        expect(parsed.error.flatten().fieldErrors.customSlug).toBeDefined();
+        expect(parsed.error.flatten().fieldErrors.tags).toContain("You can add up to 8 tags");
+      }
+    });
+
+    it("rejects tags longer than the max length", () => {
+      const parsed = createLinkSchema.safeParse({
+        targetUrl: "https://example.com",
+        tags: ["x".repeat(25)],
+      });
+
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.flatten().fieldErrors.tags).toContain(
+          "Each tag must be at most 24 characters",
+        );
+      }
+    });
+  });
+
+  describe("updateLinkMetadataSchema", () => {
+    it("accepts partial metadata updates", () => {
+      expect(updateLinkMetadataSchema.parse({ title: "  Updated title  " })).toEqual({
+        title: "Updated title",
+      });
+    });
+
+    it("normalizes tags during metadata updates", () => {
+      expect(updateLinkMetadataSchema.parse({ tags: [" Work ", "work", "Docs"] })).toEqual({
+        tags: ["work", "docs"],
+      });
+    });
+
+    it("rejects an empty patch body", () => {
+      const parsed = updateLinkMetadataSchema.safeParse({});
+
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.flatten().formErrors).toContain("At least one metadata field is required");
       }
     });
   });

@@ -25,6 +25,15 @@ describe("src/components/links/create-link-form.tsx", () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
+  it("renders metadata input fields", () => {
+    render(<CreateLinkForm />);
+
+    expect(screen.getByLabelText(/custom slug/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^title/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^description/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^tags/i)).toBeInTheDocument();
+  });
+
   it("creates a short link and copies it to the clipboard", async () => {
     vi.mocked(global.fetch).mockResolvedValue({
       ok: true,
@@ -33,6 +42,9 @@ describe("src/components/links/create-link-form.tsx", () => {
           id: "link-123",
           slug: "a3Kx9Z2",
           targetUrl: "https://example.com/article",
+          title: null,
+          description: null,
+          tags: [],
           userId: "user-123",
           createdAt: "2026-03-17T18:00:00.000Z",
           updatedAt: "2026-03-17T18:00:00.000Z",
@@ -57,7 +69,56 @@ describe("src/components/links/create-link-form.tsx", () => {
     expect(await screen.findByText("Copied!")).toBeInTheDocument();
   });
 
-  it("shows server-side validation errors", async () => {
+  it("submits metadata with normalized tags", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          id: "link-123",
+          slug: "meta123",
+          targetUrl: "https://example.com/article",
+          title: "Launch plan",
+          description: "Docs for launch day",
+          tags: ["docs", "launch"],
+          userId: "user-123",
+          createdAt: "2026-03-17T18:00:00.000Z",
+          updatedAt: "2026-03-17T18:00:00.000Z",
+        },
+      }),
+    } as Response);
+
+    render(<CreateLinkForm />);
+
+    fireEvent.change(screen.getByLabelText(/target url/i), {
+      target: { value: "https://example.com/article" },
+    });
+    fireEvent.change(screen.getByLabelText(/^title/i), {
+      target: { value: "Launch plan" },
+    });
+    fireEvent.change(screen.getByLabelText(/^description/i), {
+      target: { value: "Docs for launch day" },
+    });
+    fireEvent.change(screen.getByLabelText(/^tags/i), {
+      target: { value: "Docs, launch, docs" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create link/i }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/links",
+        expect.objectContaining({
+          body: JSON.stringify({
+            targetUrl: "https://example.com/article",
+            title: "Launch plan",
+            description: "Docs for launch day",
+            tags: ["docs", "launch"],
+          }),
+        }),
+      );
+    });
+  });
+
+  it("shows server-side validation errors for metadata fields", async () => {
     vi.mocked(global.fetch).mockResolvedValue({
       ok: false,
       json: async () => ({
@@ -65,7 +126,7 @@ describe("src/components/links/create-link-form.tsx", () => {
           message: "Invalid link input",
           details: {
             fields: {
-              targetUrl: "URL must start with http:// or https://",
+              title: "Title must be at most 120 characters",
             },
           },
         },
@@ -77,15 +138,12 @@ describe("src/components/links/create-link-form.tsx", () => {
     fireEvent.change(screen.getByLabelText(/target url/i), {
       target: { value: "https://example.com/article" },
     });
+    fireEvent.change(screen.getByLabelText(/^title/i), {
+      target: { value: "Launch plan" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /create link/i }));
 
-    expect(await screen.findByText("URL must start with http:// or https://")).toBeInTheDocument();
-  });
-
-  it("renders custom slug input field", () => {
-    render(<CreateLinkForm />);
-
-    expect(screen.getByLabelText(/custom slug/i)).toBeInTheDocument();
+    expect(await screen.findByText("Title must be at most 120 characters")).toBeInTheDocument();
   });
 
   it("shows slug preview as user types custom slug", async () => {
@@ -123,7 +181,7 @@ describe("src/components/links/create-link-form.tsx", () => {
     expect(await screen.findByText("Custom slug already exists")).toBeInTheDocument();
   });
 
-  it("submits without customSlug when field is empty", async () => {
+  it("submits without optional metadata when fields are empty", async () => {
     vi.mocked(global.fetch).mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -131,38 +189,9 @@ describe("src/components/links/create-link-form.tsx", () => {
           id: "link-123",
           slug: "a3Kx9Z2",
           targetUrl: "https://example.com",
-          userId: "user-123",
-          createdAt: "2026-03-17T18:00:00.000Z",
-          updatedAt: "2026-03-17T18:00:00.000Z",
-        },
-      }),
-    } as Response);
-
-    render(<CreateLinkForm />);
-
-    fireEvent.change(screen.getByLabelText(/target url/i), {
-      target: { value: "https://example.com" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /create link/i }));
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        "/api/v1/links",
-        expect.objectContaining({
-          body: JSON.stringify({ targetUrl: "https://example.com" }),
-        }),
-      );
-    });
-  });
-
-  it("submits without customSlug when the field contains only spaces", async () => {
-    vi.mocked(global.fetch).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        data: {
-          id: "link-123",
-          slug: "a3Kx9Z2",
-          targetUrl: "https://example.com",
+          title: null,
+          description: null,
+          tags: [],
           userId: "user-123",
           createdAt: "2026-03-17T18:00:00.000Z",
           updatedAt: "2026-03-17T18:00:00.000Z",
@@ -176,6 +205,15 @@ describe("src/components/links/create-link-form.tsx", () => {
       target: { value: "https://example.com" },
     });
     fireEvent.change(screen.getByLabelText(/custom slug/i), {
+      target: { value: "   " },
+    });
+    fireEvent.change(screen.getByLabelText(/^title/i), {
+      target: { value: "   " },
+    });
+    fireEvent.change(screen.getByLabelText(/^description/i), {
+      target: { value: "   " },
+    });
+    fireEvent.change(screen.getByLabelText(/^tags/i), {
       target: { value: "   " },
     });
     fireEvent.click(screen.getByRole("button", { name: /create link/i }));

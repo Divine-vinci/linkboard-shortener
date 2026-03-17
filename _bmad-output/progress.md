@@ -6,15 +6,20 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 2.2 Custom Slug Support and Validation
+- Current story: Story 2.3 Link Metadata Management
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Fallback local code review for Story 2.2 completed; medium-severity issues were fixed, story status synced to done, sprint tracking updated, and the BMAD code-review workflow was completed.
-- Next step: Commit & push Story 2.2, then start Story 2.3 via the Phase 4 story loop
+- Last action: Started the Story 2.3 code-review workflow after recovering and completing dev-story.
+- Next step: Poll ACP code-review session for Story 2.3 completion
+
+## Active Dev Recovery Session
+- subagent_session_key: agent:main:subagent:3c69b8cc-5043-4e0e-aa25-6a9436879bae
+- subagent_workflow: dev-story
+- subagent_status: recovered-locally
 
 ## Current ACP Session
-- acp_session_key: agent:claude:acp:8c36f19e-6336-44b4-9ba5-78dafc177868
+- acp_session_key: agent:claude:acp:94157ba8-add4-4d9c-8e79-adc8ebd173f7
 - acp_workflow: code-review
-- acp_status: superseded-by-fallback
+- acp_status: running
 
 ## Previous ACP Session
 - acp_session_key: agent:claude:acp:c8ab5077-d527-417b-b7e2-d592fab8ffea
@@ -91,6 +96,8 @@
 - [x] create-story — Story 2.2
 - [x] dev-story — Story 2.2 (output: implementation-artifacts/2-2-dev-story-result.md)
 - [x] code-review — Story 2.2 (output: implementation-artifacts/2-2-code-review.md)
+- [x] create-story — Story 2.3 (output: implementation-artifacts/2-3-link-metadata-management.md)
+- [x] dev-story — Story 2.3 (output: implementation-artifacts/2-3-dev-story-result.md)
 
 ## Blockers
 - Mission Control task mapping is incomplete in progress.md; local repo remains source of truth.

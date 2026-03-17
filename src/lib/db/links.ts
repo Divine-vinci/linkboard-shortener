@@ -2,7 +2,9 @@ import type { Link } from "@prisma/client";
 
 import { prisma } from "@/lib/db/client";
 
-export type CreateLinkData = Pick<Link, "slug" | "targetUrl" | "userId">;
+export type LinkMetadataData = Pick<Link, "title" | "description" | "tags">;
+export type CreateLinkData = Pick<Link, "slug" | "targetUrl" | "userId"> & Partial<LinkMetadataData>;
+export type UpdateLinkData = Partial<LinkMetadataData>;
 
 export async function createLink(data: CreateLinkData) {
   return prisma.link.create({
@@ -13,6 +15,25 @@ export async function createLink(data: CreateLinkData) {
 export async function findLinkBySlug(slug: string) {
   return prisma.link.findUnique({
     where: { slug },
+  });
+}
+
+export async function findLinkById(id: string, userId: string) {
+  return prisma.link.findFirst({
+    where: { id, userId },
+  });
+}
+
+export async function updateLink(id: string, userId: string, data: UpdateLinkData) {
+  const link = await findLinkById(id, userId);
+
+  if (!link) {
+    return null;
+  }
+
+  return prisma.link.update({
+    where: { id },
+    data,
   });
 }
 

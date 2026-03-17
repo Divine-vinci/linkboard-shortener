@@ -15,6 +15,11 @@ export const RESERVED_SLUGS = [
   "favicon.ico",
 ] as const;
 
+const MAX_TITLE_LENGTH = 120;
+const MAX_DESCRIPTION_LENGTH = 500;
+const MAX_TAG_LENGTH = 24;
+const MAX_TAG_COUNT = 8;
+
 const httpUrlSchema = z
   .string({ error: "Target URL is required" })
   .trim()
@@ -44,21 +49,92 @@ export const customSlugSchema = z
     "This slug is reserved and cannot be used",
   );
 
-const optionalCustomSlugSchema = z.preprocess(
-  (value) => {
-    if (typeof value === "string" && value.trim() === "") {
-      return undefined;
-    }
+function emptyStringToUndefined(value: unknown) {
+  if (typeof value === "string" && value.trim() === "") {
+    return undefined;
+  }
 
+  return value;
+}
+
+const optionalCustomSlugSchema = z.preprocess(emptyStringToUndefined, customSlugSchema.optional());
+
+export const optionalTitleSchema = z.preprocess(
+  emptyStringToUndefined,
+  z.string().trim().min(1).max(MAX_TITLE_LENGTH, `Title must be at most ${MAX_TITLE_LENGTH} characters`).optional(),
+);
+
+export const optionalDescriptionSchema = z.preprocess(
+  emptyStringToUndefined,
+  z
+    .string()
+    .trim()
+    .min(1)
+    .max(MAX_DESCRIPTION_LENGTH, `Description must be at most ${MAX_DESCRIPTION_LENGTH} characters`)
+    .optional(),
+);
+
+const tagValueSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(1, "Tags cannot be empty")
+  .max(MAX_TAG_LENGTH, `Each tag must be at most ${MAX_TAG_LENGTH} characters`);
+
+function normalizeTags(value: unknown) {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  const rawTags =
+    typeof value === "string"
+      ? value.split(",")
+      : Array.isArray(value)
+        ? value.filter((tag): tag is string => typeof tag === "string")
+        : value;
+
+  if (!Array.isArray(rawTags)) {
     return value;
-  },
-  customSlugSchema.optional(),
+  }
+
+  const normalized = Array.from(
+    new Set(rawTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean)),
+  );
+
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+export const optionalTagsSchema = z.preprocess(
+  normalizeTags,
+  z
+    .array(tagValueSchema)
+    .max(MAX_TAG_COUNT, `You can add up to ${MAX_TAG_COUNT} tags`)
+    .optional(),
 );
 
 export const createLinkSchema = z.object({
   targetUrl: httpUrlSchema,
   customSlug: optionalCustomSlugSchema,
+  title: optionalTitleSchema,
+  description: optionalDescriptionSchema,
+  tags: optionalTagsSchema,
 });
+
+export const updateLinkMetadataSchema = z
+  .object({
+    title: optionalTitleSchema,
+    description: optionalDescriptionSchema,
+    tags: optionalTagsSchema,
+  })
+  .refine(
+    (value) => value.title !== undefined || value.description !== undefined || value.tags !== undefined,
+    {
+      message: "At least one metadata field is required",
+      path: [],
+    },
+  );
 
 export type CreateLinkSchemaInput = z.input<typeof createLinkSchema>;
 export type CreateLinkInput = z.output<typeof createLinkSchema>;
+export type UpdateLinkMetadataSchemaInput = z.input<typeof updateLinkMetadataSchema>;
+export type UpdateLinkMetadataInput = z.output<typeof updateLinkMetadataSchema>;
