@@ -14,7 +14,7 @@ vi.mock("@/lib/db/users", () => ({
 }));
 
 const { POST } = await import("@/app/api/v1/auth/register/route");
-const bcrypt = (await import("bcrypt")).default;
+const bcrypt = (await import("bcrypt")).default as unknown as { hash: ReturnType<typeof vi.fn> };
 const users = await import("@/lib/db/users");
 
 describe("src/app/api/v1/auth/register/route.ts", () => {

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { auth } from "@/lib/auth/config";
 import { LogoutButton } from "@/components/auth/logout-button";
 
@@ -20,7 +22,17 @@ export default async function DashboardLayout({
             Signed in as <span className="font-medium text-zinc-200">{session?.user?.email}</span>
           </p>
         </div>
-        <LogoutButton />
+        <div className="flex items-center gap-3">
+          <nav aria-label="Dashboard navigation">
+            <Link
+              href="/dashboard/settings"
+              className="rounded-2xl border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-100 transition hover:border-emerald-400 hover:text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+            >
+              Settings
+            </Link>
+          </nav>
+          <LogoutButton />
+        </div>
       </header>
 
       {children}

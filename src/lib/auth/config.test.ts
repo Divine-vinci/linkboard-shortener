@@ -48,7 +48,7 @@ describe("src/lib/auth/config.ts", () => {
   it("registers credentials, GitHub, and Google providers", async () => {
     const { buildAuthProviders } = await import("@/lib/auth/config");
 
-    const providers = buildAuthProviders();
+    const providers = buildAuthProviders() as Array<{ id: string }>;
 
     expect(providers).toHaveLength(3);
     expect(providers.map((provider) => provider.id)).toEqual(["credentials", "github", "google"]);
@@ -57,7 +57,7 @@ describe("src/lib/auth/config.ts", () => {
   it("enables allowDangerousEmailAccountLinking for OAuth providers", async () => {
     const { buildAuthProviders } = await import("@/lib/auth/config");
 
-    const providers = buildAuthProviders();
+    const providers = buildAuthProviders() as Array<{ id: string; options?: { allowDangerousEmailAccountLinking?: boolean } }>;
     const github = providers.find((p) => p.id === "github");
     const google = providers.find((p) => p.id === "google");
 
@@ -68,7 +68,7 @@ describe("src/lib/auth/config.ts", () => {
   it("configures pages.signIn and pages.error to /login", async () => {
     await import("@/lib/auth/config");
 
-    const nextAuthCall = vi.mocked(NextAuth).mock.calls[0]?.[0] as Record<string, unknown>;
+    const nextAuthCall = vi.mocked(NextAuth).mock.calls[0]?.[0] as unknown as Record<string, unknown>;
 
     expect(nextAuthCall.pages).toEqual({
       signIn: "/login",
@@ -79,7 +79,7 @@ describe("src/lib/auth/config.ts", () => {
   it("uses JWT session strategy with the Prisma adapter", async () => {
     await import("@/lib/auth/config");
 
-    const nextAuthCall = vi.mocked(NextAuth).mock.calls[0]?.[0] as Record<string, unknown>;
+    const nextAuthCall = vi.mocked(NextAuth).mock.calls[0]?.[0] as unknown as Record<string, unknown>;
 
     expect(nextAuthCall.session).toEqual(
       expect.objectContaining({ strategy: "jwt" }),
@@ -100,7 +100,7 @@ describe("src/lib/auth/config.ts", () => {
     }));
 
     const { buildAuthProviders, oauthProviderAvailability } = await import("@/lib/auth/config");
-    const providers = buildAuthProviders();
+    const providers = buildAuthProviders() as Array<{ id: string }>;
 
     expect(oauthProviderAvailability).toEqual({
       github: false,

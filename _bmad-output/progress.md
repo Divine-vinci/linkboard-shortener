@@ -6,28 +6,30 @@
 
 ## Current State
 - Phase: 4
-- Current story: 1.6 Password Reset via Email
+- Current story: 1.7 User Profile Management (DONE)
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Heartbeat recovered stalled Story 1.6 by validating the implementation in-repo, fixing the remaining NextAuth provider typing/build issue, adding nodemailer typings, and starting the code-review workflow via ACP session `agent:claude:acp:f031c3dd-0831-4108-9439-8b29cb7784b0`.
-- Next step: Poll ACP session agent:claude:acp:f031c3dd-0831-4108-9439-8b29cb7784b0 for code-review completion
+- Last action: Story 1.7 code review completed via fallback review, partial-update bug fixed, and full validation rerun passed.
+- Next step: Commit & push Story 1.7, then set project to Wait for /deploy
 
 ## Active Dev Session
-- subagent_session_key: agent:main:subagent:f7d02f28-050d-431d-b38b-827d0a6c70e1
-- subagent_started_at: 2026-03-17T13:01:38Z
+- subagent_session_key: agent:main:subagent:d45abccc-58e3-4dc0-8d9b-4183aecf2143
+- subagent_started_at: 2026-03-17T14:30:00Z
 - subagent_workflow: dev-story
-- subagent_status: recovered via heartbeat; implementation validated locally
+- subagent_status: completed
 
-## Previous ACP Session
+## ACP Sessions
 - acp_session_key: agent:claude:acp:85ddcd31-e819-42eb-9d06-68fa715cd140
 - acp_started_at: 2026-03-17T12:30:54Z
 - acp_workflow: create-story
 - acp_status: completed
-
-## Active Code Review Session
 - acp_session_key: agent:claude:acp:f031c3dd-0831-4108-9439-8b29cb7784b0
 - acp_started_at: 2026-03-17T13:33:00Z
 - acp_workflow: code-review
-- acp_status: running
+- acp_status: stalled-no-output
+- acp_session_key: agent:claude:acp:108129e2-6cc8-48a7-827f-94579749d2a0
+- acp_started_at: 2026-03-17T15:00:25Z
+- acp_workflow: code-review
+- acp_status: stalled-no-output
 
 ## Stories
 - [x] Story 1.1: Project Initialization and Dev Environment (commit: 0ebf8fc)
@@ -35,8 +37,8 @@
 - [x] Story 1.3: Email Password Registration (commit: b0e7855)
 - [x] Story 1.4: Email Password Login and Session Management (commit: 5a0ec8e)
 - [x] Story 1.5: OAuth Login GitHub and Google (commit: 79d32a3)
-- [ ] Story 1.6: Password Reset via Email
-- [ ] Story 1.7: User Profile Management
+- [x] Story 1.6: Password Reset via Email (commit: 987f3a4)
+- [x] Story 1.7: User Profile Management (commit: pending)
 
 ## Completed Workflows
 - [x] project initialization
@@ -59,6 +61,13 @@
 - [x] create-story — Story 1.5
 - [x] dev-story — Story 1.5 (commit: 79d32a3)
 - [x] code-review — Story 1.5
+- [x] create-story — Story 1.6
+- [x] dev-story — Story 1.6 (commit: 987f3a4)
+- [x] code-review — Story 1.6
+- [x] create-story — Story 1.7
+- [x] dev-story — Story 1.7 (output: implementation-artifacts/1-7-dev-story-result.md)
+- [x] code-review — Story 1.7 (output: implementation-artifacts/1-7-code-review.md)
 
 ## Blockers
-- None — OAuth provider credentials are now configured locally in `.env`; proceed with Story 1.5 dev-story.
+- Mission Control task mapping is incomplete in progress.md; local repo remains source of truth.
+- Claude ACP code-review sessions produced no transcript output twice; fallback review completed locally and unblocked the story.

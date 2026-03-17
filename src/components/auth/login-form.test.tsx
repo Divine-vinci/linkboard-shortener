@@ -116,7 +116,8 @@ describe("src/components/auth/login-form.tsx", () => {
 
     expect(await screen.findByRole("button", { name: "Signing in..." })).toBeDisabled();
 
-    resolveFetch?.({
+    expect(resolveFetch).not.toBeNull();
+    resolveFetch!({
       ok: false,
       json: async () => ({
         error: {

@@ -19,7 +19,7 @@ vi.mock("@/lib/db/users", () => ({
   updateUser: vi.fn(),
 }));
 
-const bcrypt = (await import("bcrypt")).default;
+const bcrypt = (await import("bcrypt")).default as unknown as { hash: ReturnType<typeof vi.fn> };
 const passwordReset = await import("@/lib/auth/password-reset");
 const users = await import("@/lib/db/users");
 const { POST } = await import("@/app/api/v1/auth/reset-password/route");

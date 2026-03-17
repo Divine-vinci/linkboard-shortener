@@ -6,6 +6,12 @@
   "activeWorkflow": null,
   "completedWorkflows": [
     {
+      "id": "create-story",
+      "agentId": "sm",
+      "outputFile": "/home/clawd/projects/linkboard-shortener/_bmad-output/implementation-artifacts/1-7-user-profile-management.md",
+      "completedAt": "2026-03-17T14:10:00.000Z"
+    },
+    {
       "id": "check-implementation-readiness",
       "agentId": "architect",
       "agentName": "Winston",
@@ -146,6 +152,18 @@
       "agentId": "dev",
       "outputFile": "",
       "completedAt": "2026-03-17T14:01:36.712Z"
+    },
+    {
+      "id": "dev-story",
+      "agentId": "dev",
+      "outputFile": "/home/clawd/projects/linkboard-shortener/_bmad-output/implementation-artifacts/1-7-dev-story-result.md",
+      "completedAt": "2026-03-17T14:37:54.719Z"
+    },
+    {
+      "id": "code-review",
+      "agentId": "dev",
+      "outputFile": "/home/clawd/projects/linkboard-shortener/_bmad-output/implementation-artifacts/1-7-code-review.md",
+      "completedAt": "2026-03-17T15:04:38.005Z"
     }
   ]
 }

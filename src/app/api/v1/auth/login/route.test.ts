@@ -14,7 +14,7 @@ vi.mock("@/lib/db/users", () => ({
 
 const { __resetRateLimitStore } = await import("@/lib/rate-limit");
 const { POST } = await import("@/app/api/v1/auth/login/route");
-const bcrypt = (await import("bcrypt")).default;
+const bcrypt = (await import("bcrypt")).default as unknown as { compare: ReturnType<typeof vi.fn> };
 const users = await import("@/lib/db/users");
 
 describe("src/app/api/v1/auth/login/route.ts", () => {
