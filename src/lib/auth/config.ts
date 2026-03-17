@@ -1,7 +1,10 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcrypt";
 import NextAuth from "next-auth";
+import type { Provider } from "next-auth/providers";
 import Credentials from "next-auth/providers/credentials";
+import GitHub from "next-auth/providers/github";
+import Google from "next-auth/providers/google";
 
 import { env } from "@/config/env";
 import { prisma } from "@/lib/db/client";
@@ -9,14 +12,13 @@ import { findUserByEmail } from "@/lib/db/users";
 import { logger } from "@/lib/logger";
 import { loginSchema } from "@/lib/validations/auth";
 
-export const { auth, handlers, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
-  session: {
-    strategy: "jwt",
-    maxAge: 60 * 60 * 24,
-  },
-  secret: env.AUTH_SECRET,
-  providers: [
+export const oauthProviderAvailability = {
+  github: Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET),
+  google: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
+} as const;
+
+export function buildAuthProviders() {
+  const providers = [
     Credentials({
       name: "Email and Password",
       credentials: {
@@ -50,7 +52,48 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         };
       },
     }),
-  ],
+  ];
+
+  // AC#4: Link OAuth sign-ins to existing credential accounts by email match.
+  // allowDangerousEmailAccountLinking trusts that the OAuth provider has
+  // verified the user's email. This is safe for GitHub and Google (both
+  // require email verification) but should NOT be enabled for providers
+  // that allow unverified emails.
+  if (oauthProviderAvailability.github) {
+    providers.push(
+      GitHub({
+        clientId: env.GITHUB_CLIENT_ID,
+        clientSecret: env.GITHUB_CLIENT_SECRET,
+        allowDangerousEmailAccountLinking: true,
+      }),
+    );
+  }
+
+  if (oauthProviderAvailability.google) {
+    providers.push(
+      Google({
+        clientId: env.GOOGLE_CLIENT_ID,
+        clientSecret: env.GOOGLE_CLIENT_SECRET,
+        allowDangerousEmailAccountLinking: true,
+      }),
+    );
+  }
+
+  return providers;
+}
+
+export const { auth, handlers, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: "jwt",
+    maxAge: 60 * 60 * 24,
+  },
+  secret: env.AUTH_SECRET,
+  providers: buildAuthProviders(),
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
   callbacks: {
     jwt({ token, user }) {
       if (user?.id) {

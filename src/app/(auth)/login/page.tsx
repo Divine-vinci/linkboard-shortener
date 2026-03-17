@@ -1,14 +1,27 @@
 import { redirect } from "next/navigation";
 
+import { AuthErrorBanner } from "@/components/auth/auth-error-banner";
 import { LoginForm } from "@/components/auth/login-form";
-import { auth } from "@/lib/auth/config";
+import { OAuthButtons } from "@/components/auth/oauth-buttons";
+import { auth, oauthProviderAvailability } from "@/lib/auth/config";
 
-export default async function LoginPage() {
+type LoginPageProps = {
+  searchParams?: Promise<{
+    error?: string;
+  }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await auth();
 
   if (session?.user) {
     redirect("/dashboard");
   }
+
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const enabledProviders = Object.entries(oauthProviderAvailability)
+    .filter(([, isEnabled]) => isEnabled)
+    .map(([providerId]) => providerId as "github" | "google");
 
   return (
     <section className="space-y-8">
@@ -22,7 +35,18 @@ export default async function LoginPage() {
         </p>
       </header>
 
-      <LoginForm />
+      <div className="space-y-4">
+        <AuthErrorBanner error={resolvedSearchParams?.error} />
+        <OAuthButtons enabledProviders={enabledProviders} />
+        {enabledProviders.length > 0 ? (
+          <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-zinc-500">
+            <span className="h-px flex-1 bg-zinc-800" aria-hidden="true" />
+            <span>Or continue with email</span>
+            <span className="h-px flex-1 bg-zinc-800" aria-hidden="true" />
+          </div>
+        ) : null}
+        <LoginForm />
+      </div>
     </section>
   );
 }

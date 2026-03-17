@@ -1,6 +1,12 @@
+import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { RegisterForm } from "@/components/auth/register-form";
+import { oauthProviderAvailability } from "@/lib/auth/config";
 
 export default function RegisterPage() {
+  const enabledProviders = Object.entries(oauthProviderAvailability)
+    .filter(([, isEnabled]) => isEnabled)
+    .map(([providerId]) => providerId as "github" | "google");
+
   return (
     <section className="space-y-8">
       <header className="space-y-3 text-center">
@@ -13,7 +19,17 @@ export default function RegisterPage() {
         </p>
       </header>
 
-      <RegisterForm />
+      <div className="space-y-4">
+        <OAuthButtons enabledProviders={enabledProviders} />
+        {enabledProviders.length > 0 ? (
+          <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-zinc-500">
+            <span className="h-px flex-1 bg-zinc-800" aria-hidden="true" />
+            <span>Or continue with email</span>
+            <span className="h-px flex-1 bg-zinc-800" aria-hidden="true" />
+          </div>
+        ) : null}
+        <RegisterForm />
+      </div>
     </section>
   );
 }
