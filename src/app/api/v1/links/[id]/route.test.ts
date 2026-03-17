@@ -7,7 +7,6 @@ vi.mock("@/lib/auth/config", () => ({
 }));
 
 vi.mock("@/lib/db/links", () => ({
-  findLinkById: vi.fn(),
   updateLink: vi.fn(),
 }));
 
@@ -45,7 +44,6 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
       user: { id: "user-123", email: "user@example.com" },
       expires: "2026-03-18T18:00:00.000Z",
     });
-    vi.mocked(links.findLinkById).mockResolvedValue(buildLink());
     vi.mocked(links.updateLink).mockResolvedValue(
       buildLink({ title: "Updated title", description: "New notes", tags: ["updated", "docs"] }),
     );
@@ -63,7 +61,6 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(links.findLinkById).toHaveBeenCalledWith("link-123", "user-123");
     expect(links.updateLink).toHaveBeenCalledWith("link-123", "user-123", {
       title: "Updated title",
       description: "New notes",
@@ -89,7 +86,6 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
       user: { id: "user-123", email: "user@example.com" },
       expires: "2026-03-18T18:00:00.000Z",
     });
-    vi.mocked(links.findLinkById).mockResolvedValue(buildLink());
     vi.mocked(links.updateLink).mockResolvedValue(buildLink({ title: "Only title changed" }));
 
     const response = await PATCH(
@@ -155,12 +151,54 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
     });
   });
 
+  it("returns 400 for empty patch body with no metadata fields", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "PATCH",
+        body: JSON.stringify({}),
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(400);
+    expect(links.updateLink).not.toHaveBeenCalled();
+  });
+
+  it("clears metadata fields when null is sent", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.updateLink).mockResolvedValue(
+      buildLink({ title: null, description: null, tags: [] }),
+    );
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "PATCH",
+        body: JSON.stringify({ title: null, tags: [] }),
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(links.updateLink).toHaveBeenCalledWith("link-123", "user-123", {
+      title: null,
+      tags: [],
+    });
+  });
+
   it("returns 404 when the link does not exist or is not owned by the user", async () => {
     vi.mocked(mockedAuth).mockResolvedValue({
       user: { id: "user-123", email: "user@example.com" },
       expires: "2026-03-18T18:00:00.000Z",
     });
-    vi.mocked(links.findLinkById).mockResolvedValue(null);
+    vi.mocked(links.updateLink).mockResolvedValue(null);
 
     const response = await PATCH(
       new Request("http://localhost:3000/api/v1/links/link-404", {
@@ -177,6 +215,5 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
         message: "Link not found",
       },
     });
-    expect(links.updateLink).not.toHaveBeenCalled();
   });
 });

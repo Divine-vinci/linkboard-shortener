@@ -91,10 +91,10 @@ function normalizeTags(value: unknown) {
       ? value.split(",")
       : Array.isArray(value)
         ? value.filter((tag): tag is string => typeof tag === "string")
-        : value;
+        : undefined;
 
   if (!Array.isArray(rawTags)) {
-    return value;
+    return undefined;
   }
 
   const normalized = Array.from(
@@ -102,6 +102,33 @@ function normalizeTags(value: unknown) {
   );
 
   return normalized.length > 0 ? normalized : undefined;
+}
+
+function normalizeTagsForUpdate(value: unknown) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === null || value === "") {
+    return [];
+  }
+
+  const rawTags =
+    typeof value === "string"
+      ? value.split(",")
+      : Array.isArray(value)
+        ? value.filter((tag): tag is string => typeof tag === "string")
+        : undefined;
+
+  if (!Array.isArray(rawTags)) {
+    return undefined;
+  }
+
+  const normalized = Array.from(
+    new Set(rawTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean)),
+  );
+
+  return normalized;
 }
 
 export const optionalTagsSchema = z.preprocess(
@@ -120,11 +147,53 @@ export const createLinkSchema = z.object({
   tags: optionalTagsSchema,
 });
 
+function emptyStringToNull(value: unknown) {
+  if (value === null) {
+    return null;
+  }
+
+  if (typeof value === "string" && value.trim() === "") {
+    return null;
+  }
+
+  return value;
+}
+
+const nullableTitleSchema = z.preprocess(
+  emptyStringToNull,
+  z
+    .string()
+    .trim()
+    .min(1)
+    .max(MAX_TITLE_LENGTH, `Title must be at most ${MAX_TITLE_LENGTH} characters`)
+    .nullable()
+    .optional(),
+);
+
+const nullableDescriptionSchema = z.preprocess(
+  emptyStringToNull,
+  z
+    .string()
+    .trim()
+    .min(1)
+    .max(MAX_DESCRIPTION_LENGTH, `Description must be at most ${MAX_DESCRIPTION_LENGTH} characters`)
+    .nullable()
+    .optional(),
+);
+
+const nullableTagsSchema = z.preprocess(
+  normalizeTagsForUpdate,
+  z
+    .array(tagValueSchema)
+    .max(MAX_TAG_COUNT, `You can add up to ${MAX_TAG_COUNT} tags`)
+    .optional(),
+);
+
 export const updateLinkMetadataSchema = z
   .object({
-    title: optionalTitleSchema,
-    description: optionalDescriptionSchema,
-    tags: optionalTagsSchema,
+    title: nullableTitleSchema,
+    description: nullableDescriptionSchema,
+    tags: nullableTagsSchema,
   })
   .refine(
     (value) => value.title !== undefined || value.description !== undefined || value.tags !== undefined,

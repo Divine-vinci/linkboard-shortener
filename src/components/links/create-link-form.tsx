@@ -70,7 +70,7 @@ export function CreateLinkForm() {
       customSlug: "",
       title: "",
       description: "",
-      tags: [],
+      tags: "" as unknown as string[],
     },
   });
 
@@ -261,7 +261,7 @@ export function CreateLinkForm() {
               placeholder="docs, launch, internal"
               className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30"
               aria-invalid={errors.tags ? "true" : "false"}
-              {...register("tags" as never)}
+              {...register("tags")}
             />
             {errors.tags ? (
               <p className="text-sm text-rose-400">{errors.tags.message}</p>

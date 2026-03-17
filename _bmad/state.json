@@ -3,7 +3,17 @@
   "projectPath": "/home/clawd/projects/linkboard-shortener",
   "createdAt": "2026-03-16T00:33:19.173Z",
   "currentPhase": "implementation",
-  "activeWorkflow": null,
+  "activeWorkflow": {
+    "id": "create-story",
+    "agentId": "sm",
+    "agentName": "Bob",
+    "mode": "yolo",
+    "currentStep": 1,
+    "totalSteps": null,
+    "currentStepFile": "/home/clawd/.openclaw/extensions/bmad-method/bmad-method/bmm/workflows/4-implementation/create-story/workflow.yaml",
+    "outputFile": "",
+    "startedAt": "2026-03-17T22:05:48.065Z"
+  },
   "completedWorkflows": [
     {
       "id": "create-story",

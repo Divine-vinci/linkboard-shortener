@@ -206,5 +206,19 @@ describe("src/lib/validations/link.ts", () => {
         expect(parsed.error.flatten().formErrors).toContain("At least one metadata field is required");
       }
     });
+
+    it("accepts null to clear title and description", () => {
+      expect(updateLinkMetadataSchema.parse({ title: null })).toEqual({ title: null });
+      expect(updateLinkMetadataSchema.parse({ description: null })).toEqual({ description: null });
+    });
+
+    it("converts empty strings to null for clearing in updates", () => {
+      expect(updateLinkMetadataSchema.parse({ title: "" })).toEqual({ title: null });
+      expect(updateLinkMetadataSchema.parse({ title: "   " })).toEqual({ title: null });
+    });
+
+    it("accepts empty array to clear all tags", () => {
+      expect(updateLinkMetadataSchema.parse({ tags: [] })).toEqual({ tags: [] });
+    });
   });
 });

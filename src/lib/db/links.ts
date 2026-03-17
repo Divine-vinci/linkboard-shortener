@@ -4,7 +4,11 @@ import { prisma } from "@/lib/db/client";
 
 export type LinkMetadataData = Pick<Link, "title" | "description" | "tags">;
 export type CreateLinkData = Pick<Link, "slug" | "targetUrl" | "userId"> & Partial<LinkMetadataData>;
-export type UpdateLinkData = Partial<LinkMetadataData>;
+export type UpdateLinkData = {
+  title?: string | null;
+  description?: string | null;
+  tags?: string[];
+};
 
 export async function createLink(data: CreateLinkData) {
   return prisma.link.create({

@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 2.3 Link Metadata Management
+- Current story: Story 2.4 Link Expiration
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Started the Story 2.3 code-review workflow after recovering and completing dev-story.
-- Next step: Poll ACP code-review session for Story 2.3 completion
+- Last action: Completed Story 2.3 loop, committed/pushed `4b94db0`, then started create-story for Story 2.4 via ACP.
+- Next step: Poll ACP session agent:claude:acp:0e119fe7-8826-4de4-8530-e3aee3b89eb0 for create-story completion
 
 ## Active Dev Recovery Session
 - subagent_session_key: agent:main:subagent:3c69b8cc-5043-4e0e-aa25-6a9436879bae
@@ -17,8 +17,8 @@
 - subagent_status: recovered-locally
 
 ## Current ACP Session
-- acp_session_key: agent:claude:acp:94157ba8-add4-4d9c-8e79-adc8ebd173f7
-- acp_workflow: code-review
+- acp_session_key: agent:claude:acp:0e119fe7-8826-4de4-8530-e3aee3b89eb0
+- acp_workflow: create-story
 - acp_status: running
 
 ## Previous ACP Session
@@ -55,7 +55,7 @@
 - [x] Story 1.7: User Profile Management (commit: fc71ae6)
 - [x] Story 2.1: Create Short Links with Auto-Generated Slugs (commit: 994e561)
 - [x] Story 2.2: Custom Slug Support and Validation
-- [ ] Story 2.3: Link Metadata Management
+- [x] Story 2.3: Link Metadata Management (commit: 4b94db0)
 - [ ] Story 2.4: Link Expiration
 - [ ] Story 2.5: Update Link Target URL
 - [ ] Story 2.6: Delete Links
@@ -98,6 +98,8 @@
 - [x] code-review — Story 2.2 (output: implementation-artifacts/2-2-code-review.md)
 - [x] create-story — Story 2.3 (output: implementation-artifacts/2-3-link-metadata-management.md)
 - [x] dev-story — Story 2.3 (output: implementation-artifacts/2-3-dev-story-result.md)
+- [x] code-review — Story 2.3 (output: implementation-artifacts/2-3-code-review.md)
+- [x] Story 2.3 loop complete (commit: 4b94db0)
 
 ## Blockers
 - Mission Control task mapping is incomplete in progress.md; local repo remains source of truth.

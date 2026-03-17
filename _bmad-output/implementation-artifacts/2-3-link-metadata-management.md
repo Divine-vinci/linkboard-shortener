@@ -1,6 +1,6 @@
 # Story 2.3: Link Metadata Management
 
-Status: review
+Status: done
 
 ## Story
 
@@ -162,10 +162,21 @@ GPT-5.4 fallback subagent
 - Updated the create form and links library UI to capture and display metadata with focused component tests.
 - Targeted vitest coverage passed; DB helper integration tests remain skipped locally when the link table is unavailable.
 
+### Code Review Fixes (Claude Opus 4.6)
+
+- **H1 FIXED**: PATCH endpoint now supports clearing metadata — `null` or `""` for title/description sets to `null`; empty `[]` for tags clears all tags. Added nullable schemas (`nullableTitleSchema`, `nullableDescriptionSchema`, `nullableTagsSchema`) for the update path.
+- **H2 FIXED**: Extracted duplicated `toLinkResponse` to shared `src/lib/api-response.ts`, imported by both route files.
+- **M1 FIXED**: Removed redundant `findLinkById` call in PATCH handler — `updateLink()` already performs ownership check internally. Reduced from 3 queries to 2.
+- **M2 FIXED**: Replaced `as never` type cast on tags input with properly typed default value.
+- **M3 FIXED**: `normalizeTags` now returns `undefined` for non-array/non-string inputs instead of leaking raw values.
+- **L1 FIXED**: Added PATCH route tests for empty body rejection and metadata clearing via `null`/`[]`.
+- Added 5 new tests (3 validation, 2 route). All 144 tests pass.
+
 ### File List
 
 - `_bmad-output/implementation-artifacts/2-3-link-metadata-management.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `src/lib/api-response.ts`
 - `src/app/(dashboard)/links/page.tsx`
 - `src/app/api/v1/links/route.ts`
 - `src/app/api/v1/links/route.test.ts`
