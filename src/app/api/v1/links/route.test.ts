@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
 vi.mock("@/lib/auth/config", () => ({
   auth: vi.fn(),
@@ -20,7 +20,7 @@ const authModule = await import("@/lib/auth/config");
 const links = await import("@/lib/db/links");
 const slug = await import("@/lib/slug");
 
-const mockedAuth = authModule.auth;
+const mockedAuth = authModule.auth as Mock;
 
 describe("src/app/api/v1/links/route.ts", () => {
   beforeEach(() => {
@@ -118,6 +118,280 @@ describe("src/app/api/v1/links/route.ts", () => {
       error: {
         code: "UNAUTHORIZED",
         message: "Authentication required",
+      },
+    });
+  });
+
+  it("creates a link with custom slug and returns 201", async () => {
+    const createdAt = new Date("2026-03-17T18:00:00.000Z");
+
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
+    vi.mocked(links.createLink).mockResolvedValue({
+      id: "link-456",
+      slug: "my-custom-slug",
+      targetUrl: "https://example.com",
+      title: null,
+      description: null,
+      tags: [],
+      expiresAt: null,
+      userId: "user-123",
+      createdAt,
+      updatedAt: createdAt,
+    });
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({ targetUrl: "https://example.com", customSlug: "my-custom-slug" }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toEqual({
+      data: {
+        id: "link-456",
+        slug: "my-custom-slug",
+        targetUrl: "https://example.com",
+        userId: "user-123",
+        createdAt: createdAt.toISOString(),
+        updatedAt: createdAt.toISOString(),
+      },
+    });
+    expect(links.findLinkBySlug).toHaveBeenCalledWith("my-custom-slug");
+    expect(links.createLink).toHaveBeenCalledWith({
+      slug: "my-custom-slug",
+      targetUrl: "https://example.com",
+      userId: "user-123",
+    });
+    expect(slug.generateSlug).not.toHaveBeenCalled();
+  });
+
+  it("returns 409 for duplicate custom slug", async () => {
+    const createdAt = new Date("2026-03-17T18:00:00.000Z");
+
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.findLinkBySlug).mockResolvedValue({
+      id: "existing-link",
+      slug: "taken-slug",
+      targetUrl: "https://existing.example.com",
+      title: null,
+      description: null,
+      tags: [],
+      expiresAt: null,
+      userId: "user-999",
+      createdAt,
+      updatedAt: createdAt,
+    });
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({ targetUrl: "https://example.com", customSlug: "taken-slug" }),
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "CONFLICT",
+        message: "Custom slug already exists",
+      },
+    });
+    expect(links.createLink).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for reserved word slug", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({ targetUrl: "https://example.com", customSlug: "api" }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+
+    expect(body.error.details.fields.customSlug).toBe(
+      "This slug is reserved and cannot be used",
+    );
+    expect(links.createLink).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for invalid format custom slug", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({ targetUrl: "https://example.com", customSlug: "AB" }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+
+    expect(body.error.details.fields.customSlug).toBeDefined();
+    expect(links.createLink).not.toHaveBeenCalled();
+  });
+
+  it("falls back to auto-generated slug when customSlug is empty", async () => {
+    const createdAt = new Date("2026-03-17T18:00:00.000Z");
+
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(slug.generateSlug).mockReturnValue("a3Kx9Z2");
+    vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
+    vi.mocked(links.createLink).mockResolvedValue({
+      id: "link-123",
+      slug: "a3Kx9Z2",
+      targetUrl: "https://example.com",
+      title: null,
+      description: null,
+      tags: [],
+      expiresAt: null,
+      userId: "user-123",
+      createdAt,
+      updatedAt: createdAt,
+    });
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({ targetUrl: "https://example.com", customSlug: "" }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(slug.generateSlug).toHaveBeenCalled();
+  });
+
+  it("falls back to auto-generated slug when customSlug is whitespace only", async () => {
+    const createdAt = new Date("2026-03-17T18:00:00.000Z");
+
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(slug.generateSlug).mockReturnValue("a3Kx9Z2");
+    vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
+    vi.mocked(links.createLink).mockResolvedValue({
+      id: "link-123",
+      slug: "a3Kx9Z2",
+      targetUrl: "https://example.com",
+      title: null,
+      description: null,
+      tags: [],
+      expiresAt: null,
+      userId: "user-123",
+      createdAt,
+      updatedAt: createdAt,
+    });
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({ targetUrl: "https://example.com", customSlug: "   " }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(slug.generateSlug).toHaveBeenCalled();
+    expect(links.createLink).toHaveBeenCalledWith({
+      slug: "a3Kx9Z2",
+      targetUrl: "https://example.com",
+      userId: "user-123",
+    });
+  });
+
+  it("retries auto-generated slug creation when the database races on insert", async () => {
+    const createdAt = new Date("2026-03-17T18:05:00.000Z");
+    const prismaError = new Error("Unique constraint failed on the fields: (slug)");
+
+    Object.assign(prismaError, { code: "P2002", meta: { target: ["slug"] } });
+
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(slug.generateSlug).mockReturnValueOnce("taken12").mockReturnValueOnce("free456");
+    vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
+    vi.mocked(links.createLink)
+      .mockRejectedValueOnce(prismaError)
+      .mockResolvedValueOnce({
+        id: "link-123",
+        slug: "free456",
+        targetUrl: "https://example.com/new",
+        title: null,
+        description: null,
+        tags: [],
+        expiresAt: null,
+        userId: "user-123",
+        createdAt,
+        updatedAt: createdAt,
+      });
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({ targetUrl: "https://example.com/new" }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(slug.generateSlug).toHaveBeenCalledTimes(2);
+    expect(links.createLink).toHaveBeenNthCalledWith(1, {
+      slug: "taken12",
+      targetUrl: "https://example.com/new",
+      userId: "user-123",
+    });
+    expect(links.createLink).toHaveBeenNthCalledWith(2, {
+      slug: "free456",
+      targetUrl: "https://example.com/new",
+      userId: "user-123",
+    });
+  });
+
+  it("returns 409 when Prisma unique constraint fails (race condition)", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
+
+    const prismaError = new Error("Unique constraint failed on the fields: (`slug`)");
+
+    Object.assign(prismaError, { code: "P2002", meta: { target: ["slug"] } });
+    vi.mocked(links.createLink).mockRejectedValue(prismaError);
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({ targetUrl: "https://example.com", customSlug: "race-slug" }),
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "CONFLICT",
+        message: "Custom slug already exists",
       },
     });
   });

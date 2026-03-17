@@ -189,6 +189,19 @@
       "agentId": "dev",
       "outputFile": "",
       "completedAt": "2026-03-17T19:00:51.039Z"
+    },
+    {
+      "id": "create-story",
+      "agentId": "sm",
+      "agentName": "Bob",
+      "outputFile": "/home/clawd/projects/linkboard-shortener/_bmad-output/implementation-artifacts/2-2-custom-slug-support-and-validation.md",
+      "completedAt": "2026-03-17T19:03:00.000Z"
+    },
+    {
+      "id": "code-review",
+      "agentId": "dev",
+      "outputFile": "",
+      "completedAt": "2026-03-17T20:09:03.255Z"
     }
   ]
 }

@@ -22,6 +22,36 @@ async function generateUniqueSlug() {
   throw new AppError("CONFLICT", "Unable to generate a unique short link", 409);
 }
 
+function isSlugUniqueConstraintError(error: unknown) {
+  return (
+    error instanceof Error &&
+    "code" in error &&
+    (error as Record<string, unknown>).code === "P2002"
+  );
+}
+
+async function createLinkWithGeneratedSlug(targetUrl: string, userId: string) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const slug = await generateUniqueSlug();
+
+    try {
+      return await createLink({
+        slug,
+        targetUrl,
+        userId,
+      });
+    } catch (error) {
+      if (isSlugUniqueConstraintError(error) && attempt < 2) {
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw new AppError("CONFLICT", "Unable to generate a unique short link", 409);
+}
+
 export async function POST(request: Request) {
   const session = await auth();
   const userId = session?.user?.id;
@@ -46,12 +76,26 @@ export async function POST(request: Request) {
       );
     }
 
-    const slug = await generateUniqueSlug();
-    const link = await createLink({
-      slug,
-      targetUrl: parsed.data.targetUrl,
-      userId,
-    });
+    let link;
+
+    if (parsed.data.customSlug) {
+      const existingLink = await findLinkBySlug(parsed.data.customSlug);
+
+      if (existingLink) {
+        return NextResponse.json(
+          errorResponse(new AppError("CONFLICT", "Custom slug already exists", 409)),
+          { status: 409 },
+        );
+      }
+
+      link = await createLink({
+        slug: parsed.data.customSlug,
+        targetUrl: parsed.data.targetUrl,
+        userId,
+      });
+    } else {
+      link = await createLinkWithGeneratedSlug(parsed.data.targetUrl, userId);
+    }
 
     return NextResponse.json(
       successResponse({
@@ -74,6 +118,14 @@ export async function POST(request: Request) {
 
     if (error instanceof AppError) {
       return NextResponse.json(errorResponse(error), { status: error.statusCode });
+    }
+
+    // Handle Prisma unique constraint violation for custom slugs.
+    if (isSlugUniqueConstraintError(error)) {
+      return NextResponse.json(
+        errorResponse(new AppError("CONFLICT", "Custom slug already exists", 409)),
+        { status: 409 },
+      );
     }
 
     logger.error("links.create.unexpected_error", {

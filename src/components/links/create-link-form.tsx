@@ -4,7 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { createLinkSchema, type CreateLinkInput } from "@/lib/validations/link";
+import {
+  createLinkSchema,
+  type CreateLinkInput,
+  type CreateLinkSchemaInput,
+} from "@/lib/validations/link";
 
 type CreateLinkResponse = {
   data?: {
@@ -16,6 +20,7 @@ type CreateLinkResponse = {
     updatedAt: string;
   };
   error?: {
+    code?: string;
     message?: string;
     details?: {
       fields?: Partial<Record<keyof CreateLinkInput, string>>;
@@ -40,17 +45,27 @@ export function CreateLinkForm() {
     handleSubmit,
     reset,
     setError,
+    watch,
     formState: { errors, isSubmitting },
-  } = useForm<CreateLinkInput>({
+  } = useForm<CreateLinkSchemaInput, unknown, CreateLinkInput>({
     resolver: zodResolver(createLinkSchema),
     defaultValues: {
       targetUrl: "",
+      customSlug: "",
     },
   });
+
+  const customSlugValue = (watch("customSlug") ?? "") as string;
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     setCopyFeedback(null);
+
+    const body: Record<string, string> = { targetUrl: values.targetUrl };
+
+    if (values.customSlug) {
+      body.customSlug = values.customSlug;
+    }
 
     try {
       const response = await fetch("/api/v1/links", {
@@ -59,7 +74,7 @@ export function CreateLinkForm() {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(body),
       });
 
       const payload = (await response.json()) as CreateLinkResponse;
@@ -71,7 +86,15 @@ export function CreateLinkForm() {
           setError("targetUrl", { message: fieldErrors.targetUrl });
         }
 
-        if (!fieldErrors) {
+        if (fieldErrors?.customSlug) {
+          setError("customSlug", { message: fieldErrors.customSlug });
+        }
+
+        if (payload.error?.code === "CONFLICT") {
+          setError("customSlug", { message: "Custom slug already exists" });
+        }
+
+        if (!fieldErrors && payload.error?.code !== "CONFLICT") {
           setFormError(payload.error?.message ?? "Unable to create link right now.");
         }
 
@@ -84,7 +107,7 @@ export function CreateLinkForm() {
       }
 
       setCreatedUrl(buildShortUrl(payload.data.slug));
-      reset({ targetUrl: "" });
+      reset({ targetUrl: "", customSlug: "" });
     } catch {
       setFormError("Unable to create link right now. Please check your connection and try again.");
     }
@@ -128,6 +151,30 @@ export function CreateLinkForm() {
             <p className="text-sm text-rose-400">{errors.targetUrl.message}</p>
           ) : (
             <p className="text-xs text-zinc-500">Only http:// and https:// URLs are supported.</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-zinc-200" htmlFor="customSlug">
+            Custom slug <span className="text-zinc-500">(optional)</span>
+          </label>
+          <input
+            id="customSlug"
+            type="text"
+            autoComplete="off"
+            placeholder="my-custom-slug"
+            className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30"
+            aria-invalid={errors.customSlug ? "true" : "false"}
+            {...register("customSlug")}
+          />
+          {errors.customSlug ? (
+            <p className="text-sm text-rose-400">{errors.customSlug.message}</p>
+          ) : customSlugValue ? (
+            <p className="text-xs text-zinc-400">
+              {buildShortUrl(customSlugValue.toLowerCase().trim())}
+            </p>
+          ) : (
+            <p className="text-xs text-zinc-500">Leave empty to auto-generate a short slug.</p>
           )}
         </div>
 

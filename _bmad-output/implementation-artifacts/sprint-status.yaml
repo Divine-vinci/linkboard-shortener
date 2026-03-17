@@ -54,7 +54,7 @@ development_status:
   # Epic 2: Link Management & URL Shortening
   epic-2: in-progress
   2-1-create-short-links-with-auto-generated-slugs: done
-  2-2-custom-slug-support-and-validation: backlog
+  2-2-custom-slug-support-and-validation: done
   2-3-link-metadata-management: backlog
   2-4-link-expiration: backlog
   2-5-update-link-target-url: backlog

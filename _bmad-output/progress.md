@@ -6,44 +6,37 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 2.1 Create Short Links with Auto-Generated Slugs
+- Current story: Story 2.2 Custom Slug Support and Validation
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Resumed stalled work; dev-story for Story 2.1 completed, artifact saved, workflow finalized, and code-review ACP session agent:claude:acp:9a4c0d95-72d5-4a51-baab-60a9711ac6b0 launched.
-- Next step: Poll ACP session agent:claude:acp:9a4c0d95-72d5-4a51-baab-60a9711ac6b0 for code-review completion
-
-## Active Dev Session
-- subagent_session_key: agent:main:subagent:d45abccc-58e3-4dc0-8d9b-4183aecf2143
-- subagent_started_at: 2026-03-17T14:30:00Z
-- subagent_workflow: dev-story
-- subagent_status: completed
-
-## Current Active Dev Session
-- subagent_session_key: agent:main:subagent:7dcb8963-d647-43be-877b-f4493b6adaa9
-- subagent_started_at: 2026-03-17T18:00:00Z
-- subagent_workflow: dev-story
-- subagent_status: running
+- Last action: Fallback local code review for Story 2.2 completed; medium-severity issues were fixed, story status synced to done, sprint tracking updated, and the BMAD code-review workflow was completed.
+- Next step: Commit & push Story 2.2, then start Story 2.3 via the Phase 4 story loop
 
 ## Current ACP Session
-- acp_session_key: agent:claude:acp:9a4c0d95-72d5-4a51-baab-60a9711ac6b0
-- acp_started_at: 2026-03-17T18:30:00Z
+- acp_session_key: agent:claude:acp:8c36f19e-6336-44b4-9ba5-78dafc177868
 - acp_workflow: code-review
-- acp_status: running
+- acp_status: superseded-by-fallback
 
-## ACP Sessions
-- acp_session_key: agent:claude:acp:966622a3-262a-4bdd-a7c4-f2a25bdbd05f
-- acp_started_at: 2026-03-17T17:31:00Z
+## Previous ACP Session
+- acp_session_key: agent:claude:acp:c8ab5077-d527-417b-b7e2-d592fab8ffea
 - acp_workflow: create-story
-- acp_status: running
-- acp_session_key: agent:claude:acp:85ddcd31-e819-42eb-9d06-68fa715cd140
-- acp_started_at: 2026-03-17T12:30:54Z
+- acp_status: completed
+
+## Latest Completed Sessions
+- subagent_session_key: agent:main:subagent:7dcb8963-d647-43be-877b-f4493b6adaa9
+- subagent_workflow: dev-story
+- subagent_status: completed
+- acp_session_key: agent:claude:acp:9a4c0d95-72d5-4a51-baab-60a9711ac6b0
+- acp_workflow: code-review
+- acp_status: completed
+
+## ACP Session History
+- acp_session_key: agent:claude:acp:966622a3-262a-4bdd-a7c4-f2a25bdbd05f
 - acp_workflow: create-story
 - acp_status: completed
 - acp_session_key: agent:claude:acp:f031c3dd-0831-4108-9439-8b29cb7784b0
-- acp_started_at: 2026-03-17T13:33:00Z
 - acp_workflow: code-review
 - acp_status: stalled-no-output
 - acp_session_key: agent:claude:acp:108129e2-6cc8-48a7-827f-94579749d2a0
-- acp_started_at: 2026-03-17T15:00:25Z
 - acp_workflow: code-review
 - acp_status: stalled-no-output
 
@@ -55,8 +48,8 @@
 - [x] Story 1.5: OAuth Login GitHub and Google (commit: 79d32a3)
 - [x] Story 1.6: Password Reset via Email (commit: 987f3a4)
 - [x] Story 1.7: User Profile Management (commit: fc71ae6)
-- [ ] Story 2.1: Create Short Links with Auto-Generated Slugs
-- [ ] Story 2.2: Custom Slug Support and Validation
+- [x] Story 2.1: Create Short Links with Auto-Generated Slugs (commit: 994e561)
+- [x] Story 2.2: Custom Slug Support and Validation
 - [ ] Story 2.3: Link Metadata Management
 - [ ] Story 2.4: Link Expiration
 - [ ] Story 2.5: Update Link Target URL
@@ -92,7 +85,13 @@
 - [x] create-story — Story 1.7
 - [x] dev-story — Story 1.7 (output: implementation-artifacts/1-7-dev-story-result.md)
 - [x] code-review — Story 1.7 (output: implementation-artifacts/1-7-code-review.md)
+- [x] create-story — Story 2.1
+- [x] dev-story — Story 2.1 (output: implementation-artifacts/2-1-dev-story-result.md)
+- [x] code-review — Story 2.1
+- [x] create-story — Story 2.2
+- [x] dev-story — Story 2.2 (output: implementation-artifacts/2-2-dev-story-result.md)
+- [x] code-review — Story 2.2 (output: implementation-artifacts/2-2-code-review.md)
 
 ## Blockers
 - Mission Control task mapping is incomplete in progress.md; local repo remains source of truth.
-- Claude ACP code-review sessions produced no transcript output twice; fallback review completed locally and unblocked the story.
+- Claude ACP code-review sessions produced no transcript output twice earlier in the sprint; fallback/local reconciliation was used where needed.
