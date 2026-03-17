@@ -6,26 +6,20 @@
 
 ## Current State
 - Phase: 4
-- Current story: 1.1 Project Initialization and Dev Environment
+- Current story: 1.3 Email Password Registration
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Resumed from checkpoint on heartbeat, verified the in-repo implementation by loading `.env.example` into the shell, passed `npm test`, passed `npm run build`, booted the local dev server, and confirmed the app responds on port 3000 with the expected redirect to `/login`.
-- Next step: Start workflow: code-review for Story 1.1
+- Last action: Story 1.2 verified complete — Prisma seed fixed and executed, seeded user confirmed in Supabase Postgres, DB integration tests and lint passing.
+- Next step: Commit & push Story 1.2, then start workflow: create-story
 
 ## ACP Session
-- acp_session_key: unknown
-- acp_started_at: 2026-03-16T07:02:00Z
-- acp_workflow: create-story
-- acp_status: running
-
-## ACP Session
-- acp_session_key: agent:claude:acp:ec3843c0-2d69-41dc-8555-1c0ecb7b072b
-- acp_started_at: 2026-03-16T09:36:00Z
+- acp_session_key: agent:claude:acp:b72eb382-9c76-4c2c-b28c-2d19d1b3e2ed
+- acp_started_at: 2026-03-16T13:00:49Z
 - acp_workflow: code-review
-- acp_status: running
+- acp_status: completed
 
 ## Stories
 - [x] Story 1.1: Project Initialization and Dev Environment (commit: 0ebf8fc)
-- [ ] Story 1.2: Database Schema and Prisma Setup for Users
+- [x] Story 1.2: Database Schema and Prisma Setup for Users (verified complete; pending commit)
 - [ ] Story 1.3: Email Password Registration
 - [ ] Story 1.4: Email Password Login and Session Management
 - [ ] Story 1.5: OAuth Login GitHub and Google
@@ -34,10 +28,16 @@
 
 ## Completed Workflows
 - [x] project initialization
-- [x] create-product-brief (commit: pending, output: planning-artifacts/product-brief.md)
+- [x] create-product-brief (output: planning-artifacts/product-brief.md)
 - [x] create-prd (commit: b89da8a, output: planning-artifacts/prd.md)
-- [x] create-architecture (commit: pending, output: planning-artifacts/architecture.md)
-- [x] create-epics-and-stories (commit: pending, output: planning-artifacts/epics.md)
+- [x] create-architecture (output: planning-artifacts/architecture.md)
+- [x] create-epics-and-stories (output: planning-artifacts/epics.md)
+- [x] check-implementation-readiness (output: planning-artifacts/implementation-readiness-report.md)
+- [x] sprint-planning
+- [x] Story 1.1 loop complete (commit: 0ebf8fc)
+- [x] create-story — Story 1.2
+- [x] dev-story — Story 1.2
+- [x] code-review — Story 1.2
 
 ## Blockers
-- None
+- None — Postgres connected via Supabase, migration applied successfully.
