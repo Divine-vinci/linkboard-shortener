@@ -1,0 +1,76 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { cache } from "react";
+
+import { PublicBoardHeader } from "@/components/public/public-board-header";
+import { PublicBoardLinkList } from "@/components/public/public-board-link-list";
+import { findPublicBoardBySlug } from "@/lib/db/boards";
+
+const getPublicBoard = cache(findPublicBoardBySlug);
+
+type PublicBoardPageProps = {
+  params: Promise<{
+    slug: string;
+  }>;
+};
+
+export async function generateMetadata({ params }: PublicBoardPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const board = await getPublicBoard(slug);
+
+  if (!board) {
+    return {
+      title: "Board not found — Linkboard",
+      description: "This board is unavailable.",
+    };
+  }
+
+  const description = board.description ?? `Browse ${board.name} on Linkboard.`;
+  const url = `/b/${board.slug}`;
+
+  return {
+    title: `${board.name} — Linkboard`,
+    description,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      title: board.name,
+      description,
+      url,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: board.name,
+      description,
+    },
+  };
+}
+
+export default async function PublicBoardPage({ params }: PublicBoardPageProps) {
+  const { slug } = await params;
+  const board = await getPublicBoard(slug);
+
+  if (!board) {
+    notFound();
+  }
+
+  return (
+    <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+        <PublicBoardHeader
+          board={{
+            name: board.name,
+            description: board.description,
+            slug: board.slug,
+            _count: {
+              boardLinks: board.boardLinks.length,
+            },
+          }}
+        />
+        <PublicBoardLinkList links={board.boardLinks} />
+      </div>
+    </main>
+  );
+}

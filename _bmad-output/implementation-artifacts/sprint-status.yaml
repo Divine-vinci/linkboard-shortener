@@ -80,8 +80,8 @@ development_status:
   epic-4-retrospective: optional
 
   # Epic 5: Public Board Experience
-  epic-5: backlog
-  5-1-public-board-server-side-rendering: backlog
+  epic-5: in-progress
+  5-1-public-board-server-side-rendering: done
   5-2-open-graph-and-twitter-card-meta-tags: backlog
   5-3-mobile-optimized-public-board-layout: backlog
   epic-5-retrospective: optional

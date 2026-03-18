@@ -50,6 +50,7 @@ const {
   findBoardBySlug,
   findBoardsByUserId,
   findBoardSummaryById,
+  findPublicBoardBySlug,
   updateBoard,
 } = await import("./boards");
 
@@ -161,6 +162,36 @@ describe("src/lib/db/boards.ts", () => {
     expect(findUniqueMock).toHaveBeenCalledWith({
       where: { slug: "ideas" },
     });
+  });
+
+  it("findPublicBoardBySlug returns public boards with ordered links", async () => {
+    findFirstMock.mockResolvedValue({ id: "board-123", slug: "ideas", boardLinks: [] });
+
+    await expect(findPublicBoardBySlug("ideas")).resolves.toEqual({ id: "board-123", slug: "ideas", boardLinks: [] });
+    expect(findFirstMock).toHaveBeenCalledWith({
+      where: {
+        slug: "ideas",
+        visibility: {
+          in: [BoardVisibility.Public, BoardVisibility.Unlisted],
+        },
+      },
+      include: {
+        boardLinks: {
+          include: {
+            link: true,
+          },
+          orderBy: {
+            position: "asc",
+          },
+        },
+      },
+    });
+  });
+
+  it("findPublicBoardBySlug returns null for private boards or missing slugs", async () => {
+    findFirstMock.mockResolvedValue(null);
+
+    await expect(findPublicBoardBySlug("private-board")).resolves.toBeNull();
   });
 
   it("createBoardSlug normalizes names into max-60-char slugs", () => {

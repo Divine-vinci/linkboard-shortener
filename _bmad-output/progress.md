@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 4.2 Dashboard Home with Overview and Quick Actions (IN REVIEW)
+- Current story: Story 5.1 Public Board Server-Side Rendering (DONE)
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Confirmed Story 4.2 dev-story completion and launched code-review via ACP session `agent:claude:acp:5877e281-fddc-4f4d-a3aa-06f4d349b605`.
-- Next step: Poll ACP session agent:claude:acp:5877e281-fddc-4f4d-a3aa-06f4d349b605 for Story 4.2 code-review completion
+- Last action: Story 5.1 code-review completed via ACP session `agent:claude:acp:8b6a425d-b624-4266-836f-b5129f77b4da`; fixes applied locally and workflow finalized.
+- Next step: Commit & push Story 5.1, then start workflow: create-story for Story 5.2 Open Graph and Twitter Card Meta Tags
 
 ## Latest Completed Session
 - subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
@@ -93,7 +93,10 @@
 - [x] Story 3.4: Reorder Links Within a Board (commit: dd4895d)
 - [x] Story 3.5: Board Detail View with Link Metadata (commit: 41ac9cb)
 - [x] Story 4.1: Dashboard Layout and Sidebar Navigation (commit: 9054760)
-- [ ] Story 4.2: Dashboard Home with Overview and Quick Actions (dev complete; awaiting code-review)
+- [x] Story 4.2: Dashboard Home with Overview and Quick Actions (commit: d5baefe)
+- [x] Story 5.1: Public Board Server-Side Rendering
+- [ ] Story 5.2: Open Graph and Twitter Card Meta Tags
+- [ ] Story 5.3: Mobile-Optimized Public Board Layout
 
 ## Completed Workflows
 - [x] project initialization
@@ -199,3 +202,10 @@
 - [x] dev-story — Story 4.1 (output: implementation-artifacts/4-1-dev-story-result.md)
 - [x] code-review — Story 4.1 (output: implementation-artifacts/4-1-code-review.md)
 - [x] Story 4.1 loop complete (commit: 9054760)
+- [x] create-story — Story 4.2
+- [x] dev-story — Story 4.2 (output: implementation-artifacts/4-2-dev-story-result.md)
+- [x] code-review — Story 4.2
+- [x] Story 4.2 loop complete (commit: d5baefe)
+- [x] create-story — Story 5.1
+- [x] dev-story — Story 5.1 (output: implementation-artifacts/5-1-dev-story-result.md)
+- [x] code-review — Story 5.1

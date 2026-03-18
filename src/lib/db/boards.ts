@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 
-import type { Board, Prisma, PrismaClient } from "@prisma/client";
+import { BoardVisibility, type Board, type Prisma, type PrismaClient } from "@prisma/client";
 
 import { prisma } from "./client";
 
@@ -116,6 +116,27 @@ export async function findBoardSummaryById(id: string, db: DbClient = prisma) {
 export async function findBoardBySlug(slug: string, db: DbClient = prisma) {
   return db.board.findUnique({
     where: { slug },
+  });
+}
+
+export async function findPublicBoardBySlug(slug: string, db: DbClient = prisma) {
+  return db.board.findFirst({
+    where: {
+      slug,
+      visibility: {
+        in: [BoardVisibility.Public, BoardVisibility.Unlisted],
+      },
+    },
+    include: {
+      boardLinks: {
+        include: {
+          link: true,
+        },
+        orderBy: {
+          position: "asc",
+        },
+      },
+    },
   });
 }
 
