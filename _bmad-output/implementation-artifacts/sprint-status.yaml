@@ -61,7 +61,7 @@ development_status:
   2-6-delete-links: done
   2-7-redirect-engine-with-redis-caching: done
   2-8-link-library-with-search-and-filter: done
-  2-9-create-link-with-board-assignment: ready-for-dev
+  2-9-create-link-with-board-assignment: done
   epic-2-retrospective: optional
 
   # Epic 3: Board Organization

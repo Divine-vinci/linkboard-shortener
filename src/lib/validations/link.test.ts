@@ -165,6 +165,30 @@ describe("src/lib/validations/link.ts", () => {
       });
     });
 
+    it("accepts a valid boardId", () => {
+      const result = createLinkSchema.parse({
+        targetUrl: "https://example.com",
+        boardId: "11111111-1111-4111-8111-111111111111",
+      });
+
+      expect(result).toEqual({
+        targetUrl: "https://example.com",
+        boardId: "11111111-1111-4111-8111-111111111111",
+      });
+    });
+
+    it("rejects a non-uuid boardId", () => {
+      const parsed = createLinkSchema.safeParse({
+        targetUrl: "https://example.com",
+        boardId: "not-a-uuid",
+      });
+
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.flatten().fieldErrors.boardId).toContain("Select a valid board");
+      }
+    });
+
     it("rejects too many tags", () => {
       const parsed = createLinkSchema.safeParse({
         targetUrl: "https://example.com",

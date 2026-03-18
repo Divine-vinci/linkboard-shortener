@@ -172,6 +172,11 @@ export const optionalTagsSchema = z.preprocess(
     .optional(),
 );
 
+const optionalBoardIdSchema = z.preprocess(
+  emptyStringToUndefined,
+  z.string().uuid("Select a valid board").optional(),
+);
+
 export const createLinkSchema = z.object({
   targetUrl: httpUrlSchema,
   customSlug: optionalCustomSlugSchema,
@@ -179,6 +184,7 @@ export const createLinkSchema = z.object({
   description: optionalDescriptionSchema,
   tags: optionalTagsSchema,
   expiresAt: optionalExpiresAtSchema,
+  boardId: optionalBoardIdSchema,
 });
 
 const nullableTitleSchema = z.preprocess(

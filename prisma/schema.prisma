@@ -7,6 +7,14 @@ datasource db {
   schemas  = ["public", "auth"]
 }
 
+enum BoardVisibility {
+  Public
+  Private
+  Unlisted
+
+  @@schema("public")
+}
+
 model User {
   id            String    @id @default(uuid()) @db.Uuid
   name          String?
@@ -19,27 +27,61 @@ model User {
   accounts      Account[]
   sessions      Session[]
   links         Link[]
+  boards        Board[]
 
   @@map("users")
   @@schema("public")
 }
 
 model Link {
-  id          String    @id @default(uuid()) @db.Uuid
-  slug        String    @unique
-  targetUrl   String    @map("target_url")
+  id          String      @id @default(uuid()) @db.Uuid
+  slug        String      @unique
+  targetUrl   String      @map("target_url")
   title       String?
   description String?
-  tags        String[]  @default([])
-  expiresAt   DateTime? @map("expires_at")
-  userId      String    @map("user_id") @db.Uuid
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags        String[]    @default([])
+  expiresAt   DateTime?   @map("expires_at")
+  userId      String      @map("user_id") @db.Uuid
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  boardLinks  BoardLink[]
 
   @@index([slug], map: "idx_links_slug")
   @@index([userId], map: "idx_links_user_id")
   @@map("links")
+  @@schema("public")
+}
+
+model Board {
+  id          String          @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String          @unique
+  description String?
+  visibility  BoardVisibility @default(Private)
+  userId      String          @map("user_id") @db.Uuid
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  boardLinks  BoardLink[]
+
+  @@index([userId])
+  @@map("boards")
+  @@schema("public")
+}
+
+model BoardLink {
+  id       String   @id @default(uuid()) @db.Uuid
+  boardId  String   @map("board_id") @db.Uuid
+  linkId   String   @map("link_id") @db.Uuid
+  position Int
+  addedAt  DateTime @default(now()) @map("added_at")
+  board    Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  link     Link     @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, linkId])
+  @@index([boardId, position])
+  @@map("board_links")
   @@schema("public")
 }
 

@@ -8,8 +8,8 @@
 - Phase: 4
 - Current story: Story 2.9 Create Link with Board Assignment
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Recovered stalled Story 2.9 create-story locally, wrote the story file, and marked it ready-for-dev.
-- Next step: Start workflow: dev-story
+- Last action: Completed Story 2.9 dev-story and started Claude ACP code review session agent:claude:acp:0171b5ba-4304-4f7d-bd23-a0167b7e8b8e.
+- Next step: Poll ACP session agent:claude:acp:0171b5ba-4304-4f7d-bd23-a0167b7e8b8e for Story 2.9 code-review completion
 
 ## Latest Completed Session
 - subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
@@ -20,6 +20,11 @@
 - subagent_session_key: agent:main:subagent:3c69b8cc-5043-4e0e-aa25-6a9436879bae
 - subagent_workflow: dev-story
 - subagent_status: recovered-locally
+
+## Active Dev Session
+- subagent_session_key: agent:main:subagent:9d8978c5-1b20-48c2-9b5a-99b65bf50c6c
+- subagent_workflow: dev-story
+- subagent_status: running
 
 ## Current ACP Session
 - acp_session_key: agent:claude:acp:f218bbd5-104a-4883-b916-da4b368a0006

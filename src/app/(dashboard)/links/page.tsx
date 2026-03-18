@@ -5,6 +5,7 @@ import { LinkFilters } from "@/components/links/link-filters";
 import { LinkLibrary } from "@/components/links/link-library";
 import { LinkPagination } from "@/components/links/link-pagination";
 import { auth } from "@/lib/auth/config";
+import { findBoardsByUserId } from "@/lib/db/boards";
 import { findLinksForLibrary, getDistinctTagsForUser } from "@/lib/db/links";
 import { getCurrentTimeMs } from "@/lib/time";
 import { linkLibraryQuerySchema } from "@/lib/validations/link";
@@ -44,7 +45,9 @@ export default async function LinksPage({ searchParams }: LinksPageProps) {
   const currentTimeMs = getCurrentTimeMs();
   const totalPages = Math.max(1, Math.ceil(total / filters.limit));
   const clampedPage = Math.min(filters.page, totalPages);
-  const availableTags = userId ? await getDistinctTagsForUser(userId) : [];
+  const [availableTags, boards] = userId
+    ? await Promise.all([getDistinctTagsForUser(userId), findBoardsByUserId(userId)])
+    : [[], []];
 
   return (
     <section className="space-y-6">
@@ -55,7 +58,7 @@ export default async function LinksPage({ searchParams }: LinksPageProps) {
         </p>
       </div>
 
-      <CreateLinkForm />
+      <CreateLinkForm boards={boards.map((board) => ({ id: board.id, name: board.name }))} />
       <LinkFilters
         availableTags={availableTags}
         currentQuery={filters.q}

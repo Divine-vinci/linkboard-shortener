@@ -1,6 +1,10 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
 import { CreateLinkForm } from "@/components/links/create-link-form";
 
 describe("src/components/links/create-link-form.tsx", () => {
@@ -224,6 +228,107 @@ describe("src/components/links/create-link-form.tsx", () => {
     fireEvent.click(screen.getByRole("button", { name: /create link/i }));
 
     expect(await screen.findByText("Custom slug already exists")).toBeInTheDocument();
+  });
+
+  it("renders a board selector with provided boards", () => {
+    render(
+      <CreateLinkForm
+        boards={[
+          { id: "board-1", name: "Ideas" },
+          { id: "board-2", name: "Work" },
+        ]}
+      />,
+    );
+
+    const select = screen.getByLabelText(/^board/i);
+    expect(select).toBeInTheDocument();
+    expect(screen.getByText("No board")).toBeInTheDocument();
+    expect(screen.getByText("Ideas")).toBeInTheDocument();
+    expect(screen.getByText("Work")).toBeInTheDocument();
+  });
+
+  it("renders board selector with no options when boards list is empty", () => {
+    render(<CreateLinkForm />);
+
+    const select = screen.getByLabelText(/^board/i);
+    expect(select).toBeInTheDocument();
+    expect(screen.getByText("No board")).toBeInTheDocument();
+    expect(screen.getByText("No boards yet.")).toBeInTheDocument();
+  });
+
+  it("submits boardId when a board is selected", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          id: "link-123",
+          slug: "board1",
+          targetUrl: "https://example.com",
+          title: null,
+          description: null,
+          tags: [],
+          expiresAt: null,
+          userId: "user-123",
+          createdAt: "2026-03-17T18:00:00.000Z",
+          updatedAt: "2026-03-17T18:00:00.000Z",
+        },
+      }),
+    } as Response);
+
+    render(
+      <CreateLinkForm boards={[{ id: "11111111-1111-4111-8111-111111111111", name: "Ideas" }]} />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/target url/i), {
+      target: { value: "https://example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/^board/i), {
+      target: { value: "11111111-1111-4111-8111-111111111111" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create link/i }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/links",
+        expect.objectContaining({
+          body: JSON.stringify({
+            targetUrl: "https://example.com",
+            boardId: "11111111-1111-4111-8111-111111111111",
+          }),
+        }),
+      );
+    });
+  });
+
+  it("shows server-side boardId validation error", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: false,
+      json: async () => ({
+        error: {
+          code: "BAD_REQUEST",
+          message: "Invalid board",
+          details: {
+            fields: {
+              boardId: "Select a valid board",
+            },
+          },
+        },
+      }),
+    } as Response);
+
+    render(
+      <CreateLinkForm boards={[{ id: "11111111-1111-4111-8111-111111111111", name: "Ideas" }]} />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/target url/i), {
+      target: { value: "https://example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/^board/i), {
+      target: { value: "11111111-1111-4111-8111-111111111111" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create link/i }));
+
+    expect(await screen.findByText("Select a valid board")).toBeInTheDocument();
   });
 
   it("submits without optional metadata when fields are empty", async () => {

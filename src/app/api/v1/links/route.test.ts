@@ -12,6 +12,20 @@ vi.mock("@/lib/db/links", () => ({
   findLinksForLibrary: vi.fn(),
 }));
 
+vi.mock("@/lib/db/board-links", () => ({
+  addLinkToBoard: vi.fn(),
+}));
+
+vi.mock("@/lib/db/boards", () => ({
+  findBoardById: vi.fn(),
+}));
+
+vi.mock("@/lib/db/client", () => ({
+  prisma: {
+    $transaction: vi.fn(),
+  },
+}));
+
 vi.mock("@/lib/slug", () => ({
   generateSlug: vi.fn(),
 }));
@@ -19,6 +33,9 @@ vi.mock("@/lib/slug", () => ({
 const { GET, POST } = await import("@/app/api/v1/links/route");
 const authModule = await import("@/lib/auth/config");
 const links = await import("@/lib/db/links");
+const boardLinksModule = await import("@/lib/db/board-links");
+const boardsModule = await import("@/lib/db/boards");
+const clientModule = await import("@/lib/db/client");
 const slug = await import("@/lib/slug");
 
 const mockedAuth = authModule.auth as Mock;
@@ -138,6 +155,184 @@ describe("src/app/api/v1/links/route.ts", () => {
         userId: "user-123",
         createdAt: "2026-03-17T18:00:00.000Z",
         updatedAt: "2026-03-17T18:00:00.000Z",
+      },
+    });
+  });
+
+  it("creates a link with a board assignment and returns 201", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(slug.generateSlug).mockReturnValue("board123");
+    vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
+    vi.mocked(clientModule.prisma.$transaction as Mock).mockImplementation(async (callback) => {
+      const tx = {
+        link: { create: vi.fn().mockResolvedValue(buildLink({ slug: "board123" })) },
+      };
+      vi.mocked(boardsModule.findBoardById).mockResolvedValue({
+        id: "11111111-1111-4111-8111-111111111111",
+        userId: "user-123",
+        name: "My Board",
+        slug: "my-board",
+        description: null,
+        visibility: "Private" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      vi.mocked(boardLinksModule.addLinkToBoard).mockResolvedValue({
+        id: "bl-1",
+        boardId: "11111111-1111-4111-8111-111111111111",
+        linkId: "link-123",
+        position: 0,
+        addedAt: new Date(),
+      });
+      return callback(tx);
+    });
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({
+          targetUrl: "https://example.com",
+          boardId: "11111111-1111-4111-8111-111111111111",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(clientModule.prisma.$transaction).toHaveBeenCalled();
+    expect(links.createLink).not.toHaveBeenCalled();
+  });
+
+  it("creates a link without board assignment when boardId is omitted", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(slug.generateSlug).mockReturnValue("noboard1");
+    vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
+    vi.mocked(links.createLink).mockResolvedValue(buildLink({ slug: "noboard1" }));
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({ targetUrl: "https://example.com" }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(links.createLink).toHaveBeenCalledWith({
+      slug: "noboard1",
+      targetUrl: "https://example.com",
+      title: undefined,
+      description: undefined,
+      tags: undefined,
+      expiresAt: undefined,
+      userId: "user-123",
+    });
+    expect(clientModule.prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for an invalid boardId payload", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({ targetUrl: "https://example.com", boardId: "not-a-uuid" }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid link input",
+        details: {
+          fields: {
+            boardId: "Select a valid board",
+          },
+        },
+      },
+    });
+    expect(clientModule.prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when board assignment rejects a non-existent board", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(slug.generateSlug).mockReturnValue("board404");
+    vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
+    vi.mocked(clientModule.prisma.$transaction as Mock).mockImplementation(async (callback) => {
+      vi.mocked(boardsModule.findBoardById).mockResolvedValue(null);
+      return callback({
+        link: { create: vi.fn() },
+      });
+    });
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({
+          targetUrl: "https://example.com",
+          boardId: "11111111-1111-4111-8111-111111111111",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "BAD_REQUEST",
+        message: "Invalid board",
+      },
+    });
+  });
+
+  it("returns 400 when board assignment rejects another user's board", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(slug.generateSlug).mockReturnValue("board403");
+    vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
+    vi.mocked(clientModule.prisma.$transaction as Mock).mockImplementation(async (callback) => {
+      vi.mocked(boardsModule.findBoardById).mockResolvedValue({
+        id: "22222222-2222-4222-8222-222222222222",
+        userId: "other-user",
+        name: "Other Board",
+        slug: "other-board",
+        description: null,
+        visibility: "Private" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      return callback({
+        link: { create: vi.fn() },
+      });
+    });
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        body: JSON.stringify({
+          targetUrl: "https://example.com",
+          boardId: "22222222-2222-4222-8222-222222222222",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "BAD_REQUEST",
+        message: "Invalid board",
       },
     });
   });

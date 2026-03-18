@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
@@ -9,6 +10,11 @@ import {
   type CreateLinkInput,
   type CreateLinkSchemaInput,
 } from "@/lib/validations/link";
+
+type BoardOption = {
+  id: string;
+  name: string;
+};
 
 type CreateLinkResponse = {
   data?: {
@@ -53,8 +59,8 @@ function normalizeTagsInput(value: string) {
   return normalized;
 }
 
-
-export function CreateLinkForm() {
+export function CreateLinkForm({ boards = [] }: { boards?: BoardOption[] }) {
+  const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   const [createdUrl, setCreatedUrl] = useState<string | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
@@ -74,6 +80,7 @@ export function CreateLinkForm() {
       description: "",
       tags: "" as unknown as string[],
       expiresAt: "" as unknown as Date,
+      boardId: "",
     },
   });
 
@@ -109,6 +116,10 @@ export function CreateLinkForm() {
 
     if (values.expiresAt) {
       body.expiresAt = values.expiresAt.toISOString();
+    }
+
+    if (values.boardId) {
+      body.boardId = values.boardId;
     }
 
     try {
@@ -150,6 +161,10 @@ export function CreateLinkForm() {
           setError("expiresAt", { message: fieldErrors.expiresAt });
         }
 
+        if (fieldErrors?.boardId) {
+          setError("boardId", { message: fieldErrors.boardId });
+        }
+
         if (payload.error?.code === "CONFLICT") {
           setError("customSlug", { message: "Custom slug already exists" });
         }
@@ -167,7 +182,16 @@ export function CreateLinkForm() {
       }
 
       setCreatedUrl(buildShortUrl(payload.data.slug));
-      reset({ targetUrl: "", customSlug: "", title: "", description: "", tags: [], expiresAt: "" as unknown as Date });
+      reset({
+        targetUrl: "",
+        customSlug: "",
+        title: "",
+        description: "",
+        tags: [],
+        expiresAt: "" as unknown as Date,
+        boardId: "",
+      });
+      router.refresh();
     } catch {
       setFormError("Unable to create link right now. Please check your connection and try again.");
     }
@@ -282,6 +306,54 @@ export function CreateLinkForm() {
           </div>
         </div>
 
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-200" htmlFor="boardId">
+              Board <span className="text-zinc-500">(optional)</span>
+            </label>
+            <select
+              id="boardId"
+              className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30"
+              aria-invalid={errors.boardId ? "true" : "false"}
+              {...register("boardId")}
+            >
+              <option value="">No board</option>
+              {boards.map((board) => (
+                <option key={board.id} value={board.id}>
+                  {board.name}
+                </option>
+              ))}
+            </select>
+            {errors.boardId ? (
+              <p className="text-sm text-rose-400">{errors.boardId.message}</p>
+            ) : boards.length > 0 ? (
+              <p className="text-xs text-zinc-500">Select one of your boards to assign this link during creation.</p>
+            ) : (
+              <p className="text-xs text-zinc-500">No boards yet.</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-200" htmlFor="expiresAt">
+              Expiration date <span className="text-zinc-500">(optional)</span>
+            </label>
+            <input
+              id="expiresAt"
+              type="datetime-local"
+              className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30"
+              aria-invalid={errors.expiresAt ? "true" : "false"}
+              {...register("expiresAt", {
+                setValueAs: (value: string) => (value ? new Date(value).toISOString() : value),
+              })}
+            />
+            {errors.expiresAt ? (
+              <p className="text-sm text-rose-400">{errors.expiresAt.message}</p>
+            ) : (
+              <p className="text-xs text-zinc-500">Leave empty if this link should never expire.</p>
+            )}
+          </div>
+        </div>
+
         <div className="space-y-2">
           <label className="text-sm font-medium text-zinc-200" htmlFor="description">
             Description <span className="text-zinc-500">(optional)</span>
@@ -298,26 +370,6 @@ export function CreateLinkForm() {
             <p className="text-sm text-rose-400">{errors.description.message}</p>
           ) : (
             <p className="text-xs text-zinc-500">Optional notes for extra context. Leave blank if you just need a short link.</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-zinc-200" htmlFor="expiresAt">
-            Expiration date <span className="text-zinc-500">(optional)</span>
-          </label>
-          <input
-            id="expiresAt"
-            type="datetime-local"
-            className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30"
-            aria-invalid={errors.expiresAt ? "true" : "false"}
-            {...register("expiresAt", {
-              setValueAs: (value: string) => (value ? new Date(value).toISOString() : value),
-            })}
-          />
-          {errors.expiresAt ? (
-            <p className="text-sm text-rose-400">{errors.expiresAt.message}</p>
-          ) : (
-            <p className="text-xs text-zinc-500">Leave empty if this link should never expire.</p>
           )}
         </div>
 

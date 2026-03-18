@@ -2,12 +2,23 @@ import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse, toLinkResponse } from "@/lib/api-response";
 import { auth } from "@/lib/auth/config";
+import { addLinkToBoard } from "@/lib/db/board-links";
+import { findBoardById } from "@/lib/db/boards";
+import { prisma } from "@/lib/db/client";
 import { createLink, findLinkBySlug, findLinksForLibrary } from "@/lib/db/links";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { generateSlug } from "@/lib/slug";
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 import { createLinkSchema, linkLibraryQuerySchema } from "@/lib/validations/link";
+
+function isSlugUniqueConstraintError(error: unknown) {
+  return (
+    error instanceof Error &&
+    "code" in error &&
+    (error as Record<string, unknown>).code === "P2002"
+  );
+}
 
 async function generateUniqueSlug() {
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -22,12 +33,43 @@ async function generateUniqueSlug() {
   throw new AppError("CONFLICT", "Unable to generate a unique short link", 409);
 }
 
-function isSlugUniqueConstraintError(error: unknown) {
-  return (
-    error instanceof Error &&
-    "code" in error &&
-    (error as Record<string, unknown>).code === "P2002"
-  );
+async function createLinkRecord(data: {
+  targetUrl: string;
+  title?: string;
+  description?: string;
+  tags?: string[];
+  expiresAt?: Date;
+  userId: string;
+  slug: string;
+  boardId?: string;
+}) {
+  const linkData = {
+    slug: data.slug,
+    targetUrl: data.targetUrl,
+    title: data.title,
+    description: data.description,
+    tags: data.tags,
+    expiresAt: data.expiresAt,
+    userId: data.userId,
+  };
+
+  if (!data.boardId) {
+    return createLink(linkData);
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const board = await findBoardById(data.boardId!, tx);
+
+    if (!board || board.userId !== data.userId) {
+      throw new AppError("BAD_REQUEST", "Invalid board", 400);
+    }
+
+    const link = await tx.link.create({ data: linkData });
+
+    await addLinkToBoard({ boardId: data.boardId!, linkId: link.id }, tx);
+
+    return link;
+  });
 }
 
 async function createLinkWithGeneratedSlug(data: {
@@ -37,19 +79,15 @@ async function createLinkWithGeneratedSlug(data: {
   tags?: string[];
   expiresAt?: Date;
   userId: string;
+  boardId?: string;
 }) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const slug = await generateUniqueSlug();
 
     try {
-      return await createLink({
+      return await createLinkRecord({
+        ...data,
         slug,
-        targetUrl: data.targetUrl,
-        title: data.title,
-        description: data.description,
-        tags: data.tags,
-        expiresAt: data.expiresAt,
-        userId: data.userId,
       });
     } catch (error) {
       if (isSlugUniqueConstraintError(error) && attempt < 2) {
@@ -160,7 +198,7 @@ export async function POST(request: Request) {
         );
       }
 
-      link = await createLink({
+      link = await createLinkRecord({
         slug: parsed.data.customSlug,
         targetUrl: parsed.data.targetUrl,
         title: parsed.data.title,
@@ -168,6 +206,7 @@ export async function POST(request: Request) {
         tags: parsed.data.tags,
         expiresAt: parsed.data.expiresAt,
         userId,
+        boardId: parsed.data.boardId,
       });
     } else {
       link = await createLinkWithGeneratedSlug({
@@ -177,6 +216,7 @@ export async function POST(request: Request) {
         tags: parsed.data.tags,
         expiresAt: parsed.data.expiresAt,
         userId,
+        boardId: parsed.data.boardId,
       });
     }
 
