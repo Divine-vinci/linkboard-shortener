@@ -1,7 +1,7 @@
 import { BoardVisibility } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
-import { boardListQuerySchema, createBoardSchema, updateBoardSchema } from "./board";
+import { addBoardLinkSchema, boardListQuerySchema, createBoardSchema, updateBoardSchema } from "./board";
 
 describe("src/lib/validations/board.ts", () => {
   it("accepts valid board input and applies the default visibility", () => {
@@ -89,6 +89,23 @@ describe("src/lib/validations/board.ts", () => {
 
     expect(result.success).toBe(false);
     expect(result.error?.flatten().fieldErrors.description?.[0]).toContain("at most 500");
+  });
+
+  it("accepts a valid board-link payload", () => {
+    expect(
+      addBoardLinkSchema.parse({
+        linkId: "11111111-1111-4111-8111-111111111111",
+      }),
+    ).toEqual({
+      linkId: "11111111-1111-4111-8111-111111111111",
+    });
+  });
+
+  it("rejects an invalid board-link payload", () => {
+    const result = addBoardLinkSchema.safeParse({ linkId: "not-a-uuid" });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.flatten().fieldErrors.linkId).toContain("Select a valid link");
   });
 
   it("parses board list query params with defaults", () => {

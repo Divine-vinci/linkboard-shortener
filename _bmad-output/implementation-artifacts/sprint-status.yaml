@@ -68,7 +68,7 @@ development_status:
   epic-3: in-progress
   3-1-create-boards-with-visibility-controls: done
   3-2-edit-and-delete-boards: done
-  3-3-add-and-remove-links-from-boards: backlog
+  3-3-add-and-remove-links-from-boards: done
   3-4-reorder-links-within-a-board: backlog
   3-5-board-detail-view-with-link-metadata: backlog
   epic-3-retrospective: optional

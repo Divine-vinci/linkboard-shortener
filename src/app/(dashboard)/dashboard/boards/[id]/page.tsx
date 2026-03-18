@@ -3,6 +3,7 @@ import { BoardVisibility } from "@prisma/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { BoardLinkAdd } from "@/components/boards/board-link-add";
 import { BoardDeleteButton } from "@/components/boards/board-delete-button";
 import { auth } from "@/lib/auth/config";
 import { findBoardById } from "@/lib/db/boards";
@@ -74,15 +75,23 @@ export default async function BoardDetailPage({ params }: { params: Promise<{ id
         </dl>
       </div>
 
-      <div className="rounded-3xl border border-dashed border-zinc-700 bg-zinc-950/50 p-8">
-        <h3 className="text-lg font-semibold text-zinc-100">Links</h3>
-        <p className="mt-2 text-sm text-zinc-400">
-          Board link management is coming soon. For now, this page shows the board configuration.
-        </p>
-        {board.boardLinks.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500">This board does not contain any links yet.</p>
-        ) : null}
-      </div>
+      <BoardLinkAdd
+        boardId={board.id}
+        initialLinks={board.boardLinks.map((boardLink) => ({
+          id: boardLink.id,
+          boardId: boardLink.boardId,
+          linkId: boardLink.linkId,
+          position: boardLink.position,
+          addedAt: boardLink.addedAt.toISOString(),
+          link: {
+            id: boardLink.link.id,
+            slug: boardLink.link.slug,
+            targetUrl: boardLink.link.targetUrl,
+            title: boardLink.link.title,
+            tags: boardLink.link.tags,
+          },
+        }))}
+      />
     </section>
   );
 }

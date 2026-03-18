@@ -68,6 +68,10 @@ export const updateBoardSchema = z
     message: "At least one field must be provided",
   });
 
+export const addBoardLinkSchema = z.object({
+  linkId: z.uuid("Select a valid link"),
+});
+
 export const boardListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
   offset: z.coerce.number().int().min(0).default(0),
@@ -77,4 +81,5 @@ export type CreateBoardInput = z.output<typeof createBoardSchema>;
 export type CreateBoardSchemaInput = z.input<typeof createBoardSchema>;
 export type UpdateBoardInput = z.output<typeof updateBoardSchema>;
 export type UpdateBoardSchemaInput = z.input<typeof updateBoardSchema>;
+export type AddBoardLinkInput = z.output<typeof addBoardLinkSchema>;
 export type BoardListQuery = z.output<typeof boardListQuerySchema>;

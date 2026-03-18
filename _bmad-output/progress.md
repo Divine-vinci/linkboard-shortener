@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 3.2 Edit and Delete Boards
+- Current story: Story 3.3 Add and Remove Links from Boards
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Story 3.2 code-review completed; fixes reconciled locally, tests/lint re-run clean.
-- Next step: Commit & push, then start story 3.3: Add and Remove Links from Boards via Phase 4 story loop
+- Last action: Completed Story 3.3 fallback code review locally after ACP session agent:claude:acp:06cfcb97-6ac5-47fa-8b34-1f24776aa634 produced no transcript output; tests and lint passed, pre-existing build blocker unchanged.
+- Next step: Commit & push Story 3.3, then start story 3.4 via Phase 4 story loop
 
 ## Latest Completed Session
 - subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
@@ -22,7 +22,7 @@
 - subagent_status: recovered-locally
 
 ## Active Dev Session
-- subagent_session_key: agent:main:subagent:9d8978c5-1b20-48c2-9b5a-99b65bf50c6c
+- subagent_session_key: agent:main:subagent:9157ffba-2ee7-4f40-9af1-d5e6deb4c863
 - subagent_workflow: dev-story
 - subagent_status: running
 
@@ -39,7 +39,7 @@
 - acp_session_key: agent:claude:acp:8b861b24-e151-452b-8c2b-04d31b9ace67
 - acp_started_at: 2026-03-18T00:30:00Z
 - acp_workflow: create-story
-- acp_status: running
+- acp_status: stalled-no-output (fallback/local review completed during heartbeat recovery)
 
 ## Previous ACP Session
 - acp_session_key: agent:claude:acp:14eedc69-6c14-45a2-a0c8-f8405a2ee5ca
@@ -88,7 +88,7 @@
 - [x] Story 2.8: Link Library with Search and Filter (commit: 9c2a541)
 - [x] Story 2.9: Create Link with Board Assignment (commit: e51e452)
 - [x] Story 3.1: Create Boards with Visibility Controls (commit: 555a9a3)
-- [x] Story 3.2: Edit and Delete Boards
+- [x] Story 3.2: Edit and Delete Boards (commit: de7d372)
 
 ## Completed Workflows
 - [x] project initialization
@@ -153,6 +153,15 @@
 - [x] create-story — Story 3.2
 - [x] dev-story — Story 3.2
 - [x] code-review — Story 3.2
+- [x] create-story — Story 3.3
+- [x] dev-story — Story 3.3
+- [x] code-review — Story 3.3
+
+## Current ACP Session
+- acp_session_key: agent:claude:acp:c3ead124-d7cd-4ea1-92a5-7a4f56d17fa9
+- acp_started_at: 2026-03-18T05:32:00Z
+- acp_workflow: create-story
+- acp_status: running
 
 ## Blockers
 - Pre-existing build failure remains: `next build` fails because `src/lib/logger.ts` uses `process.stdout` in Edge runtime contexts; Story 3.1 tests/lint pass and code-review is complete, but this broader issue is still unresolved.
