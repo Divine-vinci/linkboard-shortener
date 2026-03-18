@@ -103,20 +103,21 @@ describe("src/lib/analytics/capture.ts", () => {
 
     const longUA = "A".repeat(1000);
     const longRef = "https://example.com/" + "x".repeat(3000);
+    const longCountry = "X".repeat(20);
 
     await captureClickEvent(
       "link-trunc",
       createRequest(undefined, {
         referer: longRef,
         "user-agent": longUA,
-        "x-vercel-ip-country": "TOOLONG",
+        "x-vercel-ip-country": longCountry,
       }),
     );
 
     const call = createMock.mock.calls[0][0];
     expect(call.data.userAgent).toHaveLength(512);
     expect(call.data.referrer).toHaveLength(2048);
-    expect(call.data.country).toHaveLength(7);
+    expect(call.data.country).toHaveLength(10);
   });
 
   it("logs database failures without throwing", async () => {

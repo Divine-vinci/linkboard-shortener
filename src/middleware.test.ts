@@ -142,6 +142,7 @@ describe("src/middleware.ts", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("http://localhost:3000/expired");
     expect(findLinkBySlugMock).not.toHaveBeenCalled();
+    expect(setRedirectCacheMock).not.toHaveBeenCalled();
     expect(captureClickEventMock).not.toHaveBeenCalled();
     expect(waitUntilMock).not.toHaveBeenCalled();
     expect(warnMock).toHaveBeenCalledWith("redirect.expired", { slug: "docs" });

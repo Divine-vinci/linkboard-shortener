@@ -22,11 +22,11 @@ function getCountry(request: GeoRequest) {
 }
 
 export async function captureClickEvent(linkId: string, request: NextRequest): Promise<void> {
-  const referrer = truncate(request.headers.get("referer"), MAX_REFERRER_LENGTH);
-  const userAgent = request.headers.get("user-agent")?.slice(0, MAX_USER_AGENT_LENGTH) ?? "unknown";
-  const country = truncate(getCountry(request as GeoRequest), MAX_COUNTRY_LENGTH);
-
   try {
+    const referrer = truncate(request.headers.get("referer"), MAX_REFERRER_LENGTH);
+    const userAgent = truncate(request.headers.get("user-agent"), MAX_USER_AGENT_LENGTH) ?? "unknown";
+    const country = truncate(getCountry(request as GeoRequest), MAX_COUNTRY_LENGTH);
+
     await prisma.clickEvent.create({
       data: {
         linkId,

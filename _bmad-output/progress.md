@@ -6,69 +6,15 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 6.1 Click Event Capture During Redirects (IN REVIEW)
+- Current story: Story 6.2 Link Analytics Dashboard Clicks and Trends (READY FOR DEV)
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Confirmed Story 6.1 dev-story completion and launched code-review via ACP session `agent:claude:acp:18dece0a-353d-49dc-a00b-73d2c99c169a`.
-- Next step: Poll ACP session agent:claude:acp:18dece0a-353d-49dc-a00b-73d2c99c169a for Story 6.1 code-review completion
+- Last action: Heartbeat recovered a stalled checkpoint, polled ACP session `agent:claude:acp:3cea5787-11ed-4f17-9dfc-619b29e2ea66`, and found session drift: the repo only contained uncommitted Story 6.1 code-review fixes while Story 6.2 had not actually been implemented. Validated the Story 6.1 fixes locally with `pnpm test -- --runInBand` (379 passed, 9 skipped).
+- Next step: Commit & push Story 6.1 code-review fixes, then start workflow: dev-story for Story 6.2 Link Analytics Dashboard Clicks and Trends
 
-## Latest Completed Session
-- subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
-- subagent_workflow: dev-story
-- subagent_status: completed
-
-## Active Dev Recovery Session
-- subagent_session_key: agent:main:subagent:3c69b8cc-5043-4e0e-aa25-6a9436879bae
-- subagent_workflow: dev-story
-- subagent_status: recovered-locally
-
-## Active Dev Session
-- subagent_session_key: agent:main:subagent:9157ffba-2ee7-4f40-9af1-d5e6deb4c863
-- subagent_workflow: dev-story
-- subagent_status: running
-
-## Current ACP Session
-- acp_session_key: agent:claude:acp:a1a220cd-d862-4d56-b3c9-834893d89640
-- acp_workflow: code-review
-- acp_status: completed
-
-- acp_session_key: agent:claude:acp:f218bbd5-104a-4883-b916-da4b368a0006
-- acp_workflow: code-review
-- acp_status: completed
-
-## ACP Session
-- acp_session_key: agent:claude:acp:8b861b24-e151-452b-8c2b-04d31b9ace67
-- acp_started_at: 2026-03-18T00:30:00Z
-- acp_workflow: create-story
-- acp_status: stalled-no-output (fallback/local review completed during heartbeat recovery)
-
-## Previous ACP Session
-- acp_session_key: agent:claude:acp:14eedc69-6c14-45a2-a0c8-f8405a2ee5ca
-- acp_workflow: create-story
-- acp_status: completed
-
-## Previous ACP Session
-- acp_session_key: agent:claude:acp:c8ab5077-d527-417b-b7e2-d592fab8ffea
-- acp_workflow: create-story
-- acp_status: completed
-
-## Latest Completed Sessions
-- subagent_session_key: agent:main:subagent:7dcb8963-d647-43be-877b-f4493b6adaa9
-- subagent_workflow: dev-story
-- subagent_status: completed
-- acp_session_key: agent:claude:acp:9a4c0d95-72d5-4a51-baab-60a9711ac6b0
-- acp_workflow: code-review
-- acp_status: completed
-
-## ACP Session History
-- acp_session_key: agent:claude:acp:966622a3-262a-4bdd-a7c4-f2a25bdbd05f
-- acp_workflow: create-story
-- acp_status: completed
-- acp_session_key: agent:claude:acp:f031c3dd-0831-4108-9439-8b29cb7784b0
-- acp_workflow: code-review
-- acp_status: stalled-no-output
-- acp_session_key: agent:claude:acp:108129e2-6cc8-48a7-827f-94579749d2a0
-- acp_workflow: code-review
-- acp_status: stalled-no-output
+## Recovery Notes
+- ACP session `agent:claude:acp:3cea5787-11ed-4f17-9dfc-619b29e2ea66` drifted and returned Story 6.1 review content instead of Story 6.2 review output.
+- Story 6.2 artifact exists at `_bmad-output/implementation-artifacts/6-2-link-analytics-dashboard-clicks-and-trends.md` but remains `Status: ready-for-dev` and no Story 6.2 product-code changes are present in the working tree.
+- Source of truth is `progress.md`; `_bmad/state.json` may be stale until the next clean BMAD workflow start.
 
 ## Stories
 - [x] Story 1.1: Project Initialization and Dev Environment (commit: 0ebf8fc)
@@ -97,121 +43,27 @@
 - [x] Story 5.1: Public Board Server-Side Rendering
 - [x] Story 5.2: Open Graph and Twitter Card Meta Tags
 - [x] Story 5.3: Mobile-Optimized Public Board Layout (commit: 8e5804a)
+- [x] Story 6.1: Click Event Capture During Redirects (commit: 5af97ae + uncommitted review fixes)
+- [ ] Story 6.2: Link Analytics Dashboard Clicks and Trends
+- [ ] Story 6.3: Referrer and Geographic Analytics
+- [ ] Story 6.4: Board-Level Aggregate Analytics
+- [ ] Story 7.1: API Key Generation and Management
+- [ ] Story 7.2: Links REST API Endpoints
+- [ ] Story 7.3: Boards and Board Links REST API Endpoints
+- [ ] Story 7.4: Analytics REST API Endpoints
+- [ ] Story 7.5: API Rate Limiting
+- [ ] Story 7.6: OpenAPI Documentation
 
 ## Completed Workflows
 - [x] project initialization
-- [x] create-product-brief (output: planning-artifacts/product-brief.md)
-- [x] create-prd (commit: b89da8a, output: planning-artifacts/prd.md)
-- [x] create-architecture (output: planning-artifacts/architecture.md)
-- [x] create-epics-and-stories (output: planning-artifacts/epics.md)
-- [x] check-implementation-readiness (output: planning-artifacts/implementation-readiness-report.md)
+- [x] create-product-brief
+- [x] create-prd
+- [x] create-architecture
+- [x] create-epics-and-stories
+- [x] check-implementation-readiness
 - [x] sprint-planning
-- [x] Story 1.1 loop complete (commit: 0ebf8fc)
-- [x] create-story — Story 1.2
-- [x] dev-story — Story 1.2
-- [x] code-review — Story 1.2
-- [x] create-story — Story 1.3
-- [x] dev-story — Story 1.3
-- [x] code-review — Story 1.3
-- [x] create-story — Story 1.4
-- [x] dev-story — Story 1.4 (commit: 5a0ec8e)
-- [x] code-review — Story 1.4
-- [x] create-story — Story 1.5
-- [x] dev-story — Story 1.5 (commit: 79d32a3)
-- [x] code-review — Story 1.5
-- [x] create-story — Story 1.6
-- [x] dev-story — Story 1.6 (commit: 987f3a4)
-- [x] code-review — Story 1.6
-- [x] create-story — Story 1.7
-- [x] dev-story — Story 1.7 (output: implementation-artifacts/1-7-dev-story-result.md)
-- [x] code-review — Story 1.7 (output: implementation-artifacts/1-7-code-review.md)
-- [x] create-story — Story 2.1
-- [x] dev-story — Story 2.1 (output: implementation-artifacts/2-1-dev-story-result.md)
-- [x] code-review — Story 2.1
-- [x] create-story — Story 2.2
-- [x] dev-story — Story 2.2 (output: implementation-artifacts/2-2-dev-story-result.md)
-- [x] code-review — Story 2.2 (output: implementation-artifacts/2-2-code-review.md)
-- [x] create-story — Story 2.3 (output: implementation-artifacts/2-3-link-metadata-management.md)
-- [x] dev-story — Story 2.3 (output: implementation-artifacts/2-3-dev-story-result.md)
-- [x] code-review — Story 2.3 (output: implementation-artifacts/2-3-code-review.md)
-- [x] Story 2.3 loop complete (commit: 9091138)
-- [x] create-story — Story 2.4
-- [x] dev-story — Story 2.4 (output: implementation-artifacts/2-4-dev-story-result.md)
-- [x] code-review — Story 2.4
-- [x] Story 2.4 loop complete (commit: 5f5bbed)
-- [x] create-story — Story 2.5 (output: implementation-artifacts/2-5-update-link-target-url.md)
-- [x] create-story — Story 2.6 (output: implementation-artifacts/2-6-delete-links.md)
-- [x] dev-story — Story 2.5 (output: implementation-artifacts/2-5-dev-story-result.md)
-- [x] code-review — Story 2.5
-- [x] Story 2.5 loop complete (commit: 3c245f8)
-- [x] dev-story — Story 2.6 (output: implementation-artifacts/2-6-dev-story-result.md)
-- [x] code-review — Story 2.6 (output: implementation-artifacts/2-6-code-review.md, fallback review after ACP state drift)
-- [x] Story 2.6 loop complete (commit: 7267370)
-- [x] code-review — Story 2.7 (output: implementation-artifacts/2-7-code-review.md, heartbeat fallback after ACP drift)
-- [x] Story 2.7 loop complete (commit: 2f5a8d2)
-- [x] code-review — Story 2.8 (output: implementation-artifacts/2-8-code-review.md, fallback review after Claude ACP timeout)
-- [x] Story 2.8 loop complete (commit: 9c2a541)
-- [x] create-story — Story 2.9
-- [x] dev-story — Story 2.9 (output: implementation-artifacts/2-9-dev-story-result.md)
-- [x] code-review — Story 2.9
-- [x] Story 2.9 loop complete (commit: e51e452)
-- [x] create-story — Story 3.1
-- [x] dev-story — Story 3.1
-- [x] code-review — Story 3.1
-- [x] Story 3.1 loop complete (commit: 555a9a3)
-- [x] create-story — Story 3.2
-- [x] dev-story — Story 3.2
-- [x] code-review — Story 3.2
-- [x] Story 3.2 loop complete (commit: de7d372)
-- [x] create-story — Story 3.3
-- [x] dev-story — Story 3.3
-- [x] code-review — Story 3.3
-- [x] Story 3.3 loop complete (commit: e5cb1f1)
-- [x] create-story — Story 3.4
-- [x] dev-story — Story 3.4 (output: implementation-artifacts/3-4-dev-story-result.md)
-- [x] code-review — Story 3.4
-- [x] Story 3.4 loop complete (commit: dd4895d)
-- [x] create-story — Story 3.5
-- [x] dev-story — Story 3.5 (output: implementation-artifacts/3-5-dev-story-result.md)
-- [x] code-review — Story 3.4 (output: implementation-artifacts/3-4-code-review.md)
-- [x] create-story — Story 3.2
-- [x] dev-story — Story 3.2
-- [x] code-review — Story 3.2
-- [x] create-story — Story 3.3
-- [x] dev-story — Story 3.3
-- [x] code-review — Story 3.3
-
-## Current ACP Session
-- acp_session_key: agent:claude:acp:c3ead124-d7cd-4ea1-92a5-7a4f56d17fa9
-- acp_started_at: 2026-03-18T05:32:00Z
-- acp_workflow: create-story
-- acp_status: completed
-
-## Current Dev Session
-- subagent_session_key: agent:main:subagent:34773d56-22e5-447f-bdda-358b17cf2473
-- subagent_started_at: 2026-03-18T07:00:00Z
-- subagent_workflow: dev-story
-- subagent_status: running
+- [x] Story 6.1 create-story/dev-story/code-review loop complete (commit: 5af97ae, follow-up fixes pending commit)
 
 ## Blockers
-- Pre-existing build failure remains: `next build` fails because `src/lib/logger.ts` uses `process.stdout` in Edge runtime contexts; Story 3.1 tests/lint pass and code-review is complete, but this broader issue is still unresolved.
-- Mission Control task mapping is incomplete in progress.md; local repo remains source of truth.
-- Claude ACP code-review sessions produced no transcript output multiple times in the sprint; fallback/local reconciliation was used where needed, including Story 2.8 after timeout/no-output.
-
-- [x] create-story — Story 4.1
-- [x] dev-story — Story 4.1 (output: implementation-artifacts/4-1-dev-story-result.md)
-- [x] code-review — Story 4.1 (output: implementation-artifacts/4-1-code-review.md)
-- [x] Story 4.1 loop complete (commit: 9054760)
-- [x] create-story — Story 4.2
-- [x] dev-story — Story 4.2 (output: implementation-artifacts/4-2-dev-story-result.md)
-- [x] code-review — Story 4.2
-- [x] Story 4.2 loop complete (commit: d5baefe)
-- [x] create-story — Story 5.1
-- [x] dev-story — Story 5.1 (output: implementation-artifacts/5-1-dev-story-result.md)
-- [x] code-review — Story 5.1
-- [x] create-story — Story 5.2
-- [x] dev-story — Story 5.2 (output: implementation-artifacts/5-2-dev-story-result.md)
-- [x] code-review — Story 5.2 (output: implementation-artifacts/5-2-code-review.md, fallback local review after ACP no-output)
-- [x] dev-story — Story 5.3 (output: implementation-artifacts/5-3-mobile-optimized-public-board-layout.md)
-- [x] code-review — Story 5.3
-- [x] Story 5.3 loop complete (commit: 8e5804a)
+- BMAD session state drift between Story 6.1 and Story 6.2; stale ACP and `_bmad/state.json` entries need clean handoff on next workflow start.
+- Pre-existing build failure remains: `next build` fails because `src/lib/logger.ts` uses `process.stdout` in Edge runtime contexts; outside Story 6.1 review scope.
