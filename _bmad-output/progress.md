@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 6.3 Referrer and Geographic Analytics (CODE-REVIEW IN PROGRESS)
+- Current story: Story 6.3 Referrer and Geographic Analytics (COMMITTED)
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Resumed stalled Story 6.3 dev-story, confirmed subagent output, completed BMAD dev-story, and started code-review via ACP session `agent:claude:acp:77121e40-f28f-49aa-9bf1-876c3bc52be6`.
-- Next step: Poll ACP session agent:claude:acp:77121e40-f28f-49aa-9bf1-876c3bc52be6 for Story 6.3 code-review completion
+- Last action: Recovered stalled Story 6.3 code-review locally after ACP session `agent:claude:acp:77121e40-f28f-49aa-9bf1-876c3bc52be6` produced no transcript, fixed the geo aggregation SQL bug, reran tests + lint, completed BMAD code-review, committed, and pushed `217fbbe`.
+- Next step: Start story 6.4: Board-Level Aggregate Analytics via Phase 4 story loop
 
 ## Active Dev Session
 - subagent_session_key: agent:main:subagent:7e038cda-80d1-4ee4-9a6e-e8d3ccfef947
@@ -20,7 +20,7 @@
 ## Active Code Review Session
 - acp_session_key: agent:claude:acp:77121e40-f28f-49aa-9bf1-876c3bc52be6
 - acp_workflow: code-review
-- acp_status: running
+- acp_status: stalled-no-output (recovered locally; workflow completed)
 
 ## Previous Code Review Session
 - acp_session_key: agent:claude:acp:64fd925d-540a-4efd-8b3f-621214474f08
@@ -30,7 +30,7 @@
 ## Active Create Story Session
 - acp_session_key: agent:claude:acp:e5352dc1-a9fc-4b97-9e4c-02ea72d90a67
 - acp_workflow: create-story
-- acp_status: running
+- acp_status: stalled-no-output (recovered locally; workflow completed)
 
 ## Recovery Notes
 - ACP session `agent:claude:acp:3cea5787-11ed-4f17-9dfc-619b29e2ea66` drifted and returned Story 6.1 review content instead of Story 6.2 review output.
@@ -66,7 +66,7 @@
 - [x] Story 5.3: Mobile-Optimized Public Board Layout (commit: 8e5804a)
 - [x] Story 6.1: Click Event Capture During Redirects (commit: 5af97ae + uncommitted review fixes)
 - [x] Story 6.2: Link Analytics Dashboard Clicks and Trends (commit: 279e018)
-- [ ] Story 6.3: Referrer and Geographic Analytics (dev complete, code review running)
+- [x] Story 6.3: Referrer and Geographic Analytics (commit: 217fbbe)
 - [ ] Story 6.4: Board-Level Aggregate Analytics
 - [ ] Story 7.1: API Key Generation and Management
 - [ ] Story 7.2: Links REST API Endpoints
