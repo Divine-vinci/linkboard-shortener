@@ -46,6 +46,8 @@ describe("src/app/(public)/b/[slug]/page.tsx", () => {
     render(await PublicBoardPage({ params: Promise.resolve({ slug: "creator-kit" }) }));
 
     expect(findPublicBoardBySlugMock).toHaveBeenCalledWith("creator-kit");
+    expect(screen.getByRole("main")).toHaveAttribute("data-testid", "public-board-page");
+    expect(screen.getByRole("main")).toHaveClass("px-3", "py-6", "sm:px-6", "sm:py-10");
     expect(screen.getByRole("heading", { level: 1, name: "Creator Kit" })).toBeInTheDocument();
     expect(screen.getByText("Launch-ready references")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /launch docs/i })).toHaveAttribute("href", "/launch-docs");

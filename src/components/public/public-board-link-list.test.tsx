@@ -26,8 +26,8 @@ describe("src/components/public/public-board-link-list.tsx", () => {
     expect(link).toHaveAttribute("href", "/creator-kit");
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
-    expect(link).toHaveClass("focus:ring-2", "focus:ring-emerald-400/40");
-    expect(screen.getByText("docs.example.com")).toBeInTheDocument();
+    expect(link).toHaveClass("min-h-11", "p-4", "sm:p-5", "focus:ring-2", "focus:ring-emerald-400/40");
+    expect(screen.getByText("docs.example.com")).toHaveClass("break-all");
     expect(screen.getByText("Docs and launch checklist")).toBeInTheDocument();
   });
 
@@ -84,5 +84,31 @@ describe("src/components/public/public-board-link-list.tsx", () => {
 
     expect(screen.getByRole("link", { name: /creator-kit/i })).toBeInTheDocument();
     expect(screen.getByText("not a valid url")).toBeInTheDocument();
+  });
+
+  it("keeps a single-column mobile layout with wrapped long content", () => {
+    render(
+      <PublicBoardLinkList
+        links={[
+          {
+            id: "board-link-1",
+            position: 0,
+            link: {
+              slug: "very-long-slug-used-as-a-fallback-title",
+              title: "A Very Long Link Title That Should Wrap On Mobile Without Breaking The Card Layout",
+              description:
+                "A long description that should continue wrapping inside the card on narrow screens while preserving readable spacing.",
+              targetUrl: "https://subdomain.example.com/really/long/path/that/should/still/wrap/neatly",
+            },
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole("list", { name: "Board links" })).toHaveClass("space-y-3", "sm:space-y-4");
+    expect(screen.getByRole("link", { name: /A Very Long Link Title/i })).toHaveClass("min-h-11", "group", "block");
+    expect(screen.getByRole("heading", { level: 2, name: /A Very Long Link Title/i })).toHaveClass("min-w-0", "break-words", "text-base", "sm:text-lg");
+    expect(screen.getByText(/A long description/)).toHaveClass("break-words");
+    expect(screen.getByText("subdomain.example.com")).toHaveClass("break-all");
   });
 });

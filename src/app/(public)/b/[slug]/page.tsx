@@ -66,8 +66,8 @@ export default async function PublicBoardPage({ params }: PublicBoardPageProps) 
   }
 
   return (
-    <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+    <main className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10 lg:px-8" data-testid="public-board-page">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 sm:gap-6">
         <PublicBoardHeader
           board={{
             name: board.name,

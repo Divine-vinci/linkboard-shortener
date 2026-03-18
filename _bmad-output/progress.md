@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 5.2 Open Graph and Twitter Card Meta Tags (DONE)
+- Current story: Story 5.3 Mobile-Optimized Public Board Layout (IN REVIEW)
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Completed fallback local code review for Story 5.2 after ACP session `agent:claude:acp:d2b31499-a5a0-4cbd-a322-6425c924c937` produced no transcript output; tests and lint passed, build failure remains the pre-existing logger Edge-runtime issue.
-- Next step: Commit & push Story 5.2, then start workflow: create-story for Story 5.3 Mobile-Optimized Public Board Layout
+- Last action: Started code-review for Story 5.3 via ACP session `agent:claude:acp:2bdbffa6-b941-4b62-a780-b6a8e9ac8c7c`.
+- Next step: Poll ACP session agent:claude:acp:2bdbffa6-b941-4b62-a780-b6a8e9ac8c7c for Story 5.3 code-review completion
 
 ## Latest Completed Session
 - subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
@@ -96,7 +96,7 @@
 - [x] Story 4.2: Dashboard Home with Overview and Quick Actions (commit: d5baefe)
 - [x] Story 5.1: Public Board Server-Side Rendering
 - [x] Story 5.2: Open Graph and Twitter Card Meta Tags
-- [ ] Story 5.3: Mobile-Optimized Public Board Layout
+- [ ] Story 5.3: Mobile-Optimized Public Board Layout (dev complete; awaiting code-review)
 
 ## Completed Workflows
 - [x] project initialization
@@ -212,3 +212,4 @@
 - [x] create-story — Story 5.2
 - [x] dev-story — Story 5.2 (output: implementation-artifacts/5-2-dev-story-result.md)
 - [x] code-review — Story 5.2 (output: implementation-artifacts/5-2-code-review.md, fallback local review after ACP no-output)
+- [x] dev-story — Story 5.3 (output: implementation-artifacts/5-3-mobile-optimized-public-board-layout.md)

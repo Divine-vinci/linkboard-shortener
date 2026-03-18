@@ -83,7 +83,7 @@ development_status:
   epic-5: in-progress
   5-1-public-board-server-side-rendering: done
   5-2-open-graph-and-twitter-card-meta-tags: done
-  5-3-mobile-optimized-public-board-layout: backlog
+  5-3-mobile-optimized-public-board-layout: done
   epic-5-retrospective: optional
 
   # Epic 6: Link Analytics
