@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 4.1 Dashboard Layout and Sidebar Navigation (IN REVIEW)
+- Current story: Story 4.1 Dashboard Layout and Sidebar Navigation (DONE)
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Confirmed Story 4.1 dev-story output and launched code-review via ACP session `agent:claude:acp:77ff62d6-4cc1-490d-b5b9-4684da7d5bde`.
-- Next step: Poll ACP session agent:claude:acp:77ff62d6-4cc1-490d-b5b9-4684da7d5bde for Story 4.1 code-review completion
+- Last action: Completed Story 4.1 code-review, committed/pushed changes as `9054760`, and prepared to start Story 4.2.
+- Next step: Start story 4.2: Dashboard Home with Overview and Quick Actions via Phase 4 story loop
 
 ## Latest Completed Session
 - subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
@@ -92,7 +92,7 @@
 - [x] Story 3.3: Add and Remove Links from Boards (commit: e5cb1f1)
 - [x] Story 3.4: Reorder Links Within a Board (commit: dd4895d)
 - [x] Story 3.5: Board Detail View with Link Metadata (commit: 41ac9cb)
-- [ ] Story 4.1: Dashboard Layout and Sidebar Navigation (dev complete; awaiting code-review)
+- [x] Story 4.1: Dashboard Layout and Sidebar Navigation (commit: 9054760)
 
 ## Completed Workflows
 - [x] project initialization
@@ -196,3 +196,5 @@
 
 - [x] create-story — Story 4.1
 - [x] dev-story — Story 4.1 (output: implementation-artifacts/4-1-dev-story-result.md)
+- [x] code-review — Story 4.1 (output: implementation-artifacts/4-1-code-review.md)
+- [x] Story 4.1 loop complete (commit: 9054760)
