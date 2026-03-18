@@ -11,6 +11,24 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
+function buildBoardLink(overrides: Partial<Parameters<typeof BoardLinkAdd>[0]["initialLinks"][number]> = {}) {
+  return {
+    id: "bl-1",
+    boardId: "board-123",
+    linkId: "link-123",
+    position: 0,
+    addedAt: "2026-03-18T03:00:00.000Z",
+    link: {
+      id: "link-123",
+      slug: "launch-docs",
+      targetUrl: "https://example.com/docs",
+      title: "Launch docs",
+      tags: ["docs"],
+    },
+    ...overrides,
+  };
+}
+
 describe("src/components/boards/board-link-add.tsx", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -26,23 +44,8 @@ describe("src/components/boards/board-link-add.tsx", () => {
     render(
       <BoardLinkAdd
         boardId="board-123"
-        initialLinks={[
-          {
-            id: "bl-1",
-            boardId: "board-123",
-            linkId: "link-123",
-            position: 0,
-            addedAt: "2026-03-18T03:00:00.000Z",
-            link: {
-              id: "link-123",
-              slug: "launch-docs",
-              targetUrl: "https://example.com/docs",
-              title: "Launch docs",
-              tags: ["docs"],
-            },
-          },
-        ]}
-      />, 
+        initialLinks={[buildBoardLink()]}
+      />,
     );
 
     expect(await screen.findByText("Launch docs")).toBeInTheDocument();
@@ -110,22 +113,7 @@ describe("src/components/boards/board-link-add.tsx", () => {
     render(
       <BoardLinkAdd
         boardId="board-123"
-        initialLinks={[
-          {
-            id: "bl-1",
-            boardId: "board-123",
-            linkId: "link-123",
-            position: 0,
-            addedAt: "2026-03-18T03:00:00.000Z",
-            link: {
-              id: "link-123",
-              slug: "launch-docs",
-              targetUrl: "https://example.com/docs",
-              title: "Launch docs",
-              tags: ["docs"],
-            },
-          },
-        ]}
+        initialLinks={[buildBoardLink()]}
       />,
     );
 
@@ -142,5 +130,121 @@ describe("src/components/boards/board-link-add.tsx", () => {
       expect(screen.queryByText("Launch docs")).not.toBeInTheDocument();
     });
     expect(refreshMock).toHaveBeenCalled();
+  });
+
+  it("reorders links with move controls and disables boundary buttons", async () => {
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [] }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              id: "bl-2",
+              boardId: "board-123",
+              linkId: "link-456",
+              position: 0,
+            },
+            {
+              id: "bl-1",
+              boardId: "board-123",
+              linkId: "link-123",
+              position: 1,
+            },
+          ],
+        }),
+      } as Response);
+
+    render(
+      <BoardLinkAdd
+        boardId="board-123"
+        initialLinks={[
+          buildBoardLink(),
+          buildBoardLink({
+            id: "bl-2",
+            linkId: "link-456",
+            position: 1,
+            link: {
+              id: "link-456",
+              slug: "team-wiki",
+              targetUrl: "https://example.com/wiki",
+              title: "Team wiki",
+              tags: ["ops"],
+            },
+          }),
+        ]}
+      />,
+    );
+
+    expect(await screen.findByLabelText("Move Launch docs up")).toBeDisabled();
+    expect(screen.getByLabelText("Move Team wiki down")).toBeDisabled();
+
+    fireEvent.click(screen.getByLabelText("Move Launch docs down"));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenNthCalledWith(
+        2,
+        "/api/v1/boards/board-123/links/reorder",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({ linkIds: ["link-456", "link-123"] }),
+        }),
+      );
+    });
+
+    expect(refreshMock).toHaveBeenCalled();
+    const titles = screen.getAllByRole("listitem").map((item) => item.textContent ?? "");
+    expect(titles[0]).toContain("Team wiki");
+    expect(titles[1]).toContain("Launch docs");
+  });
+
+  it("reverts the optimistic reorder when the API fails", async () => {
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [] }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({
+          error: {
+            message: "Unable to reorder links right now.",
+          },
+        }),
+      } as Response);
+
+    render(
+      <BoardLinkAdd
+        boardId="board-123"
+        initialLinks={[
+          buildBoardLink(),
+          buildBoardLink({
+            id: "bl-2",
+            linkId: "link-456",
+            position: 1,
+            link: {
+              id: "link-456",
+              slug: "team-wiki",
+              targetUrl: "https://example.com/wiki",
+              title: "Team wiki",
+              tags: ["ops"],
+            },
+          }),
+        ]}
+      />,
+    );
+
+    fireEvent.click(await screen.findByLabelText("Move Launch docs down"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Unable to reorder links right now.")).toBeInTheDocument();
+    });
+
+    const titles = screen.getAllByRole("listitem").map((item) => item.textContent ?? "");
+    expect(titles[0]).toContain("Launch docs");
+    expect(titles[1]).toContain("Team wiki");
   });
 });

@@ -16,6 +16,10 @@ type BoardLinkWithMetadata = {
   >;
 };
 
+function canStartTransaction(db: DbClient): db is PrismaClient {
+  return "$transaction" in db;
+}
+
 export async function getNextBoardLinkPosition(boardId: string, db: DbClient = prisma) {
   const result = await db.boardLink.aggregate({
     where: { boardId },
@@ -73,6 +77,26 @@ export async function recompactBoardLinkPositions(boardId: string, db: DbClient 
       });
     }),
   );
+}
+
+export async function reorderBoardLinks(boardId: string, orderedLinkIds: string[], db: DbClient = prisma) {
+  const operations = orderedLinkIds.map((linkId, index) =>
+    db.boardLink.update({
+      where: {
+        boardId_linkId: {
+          boardId,
+          linkId,
+        },
+      },
+      data: { position: index },
+    }),
+  );
+
+  if (canStartTransaction(db)) {
+    return db.$transaction(operations);
+  }
+
+  return Promise.all(operations);
 }
 
 export async function getBoardLinksWithMetadata(boardId: string, db: DbClient = prisma): Promise<BoardLinkWithMetadata[]> {

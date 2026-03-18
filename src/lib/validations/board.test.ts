@@ -1,7 +1,13 @@
 import { BoardVisibility } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
-import { addBoardLinkSchema, boardListQuerySchema, createBoardSchema, updateBoardSchema } from "./board";
+import {
+  addBoardLinkSchema,
+  boardListQuerySchema,
+  createBoardSchema,
+  reorderBoardLinksSchema,
+  updateBoardSchema,
+} from "./board";
 
 describe("src/lib/validations/board.ts", () => {
   it("accepts valid board input and applies the default visibility", () => {
@@ -106,6 +112,36 @@ describe("src/lib/validations/board.ts", () => {
 
     expect(result.success).toBe(false);
     expect(result.error?.flatten().fieldErrors.linkId).toContain("Select a valid link");
+  });
+
+  it("accepts a valid reorder payload", () => {
+    expect(
+      reorderBoardLinksSchema.parse({
+        linkIds: [
+          "11111111-1111-4111-8111-111111111111",
+          "22222222-2222-4222-8222-222222222222",
+        ],
+      }),
+    ).toEqual({
+      linkIds: [
+        "11111111-1111-4111-8111-111111111111",
+        "22222222-2222-4222-8222-222222222222",
+      ],
+    });
+  });
+
+  it("rejects empty reorder payloads", () => {
+    const result = reorderBoardLinksSchema.safeParse({ linkIds: [] });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.flatten().fieldErrors.linkIds).toContain("Select at least one link");
+  });
+
+  it("rejects invalid reorder ids", () => {
+    const result = reorderBoardLinksSchema.safeParse({ linkIds: ["not-a-uuid"] });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.flatten().fieldErrors.linkIds).toContain("Select valid links");
   });
 
   it("parses board list query params with defaults", () => {

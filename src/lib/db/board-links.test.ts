@@ -2,16 +2,18 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { aggregateMock, createMock, deleteMock, findManyMock, updateMock } = vi.hoisted(() => ({
+const { aggregateMock, createMock, deleteMock, findManyMock, transactionMock, updateMock } = vi.hoisted(() => ({
   aggregateMock: vi.fn(),
   createMock: vi.fn(),
   deleteMock: vi.fn(),
   findManyMock: vi.fn(),
+  transactionMock: vi.fn(),
   updateMock: vi.fn(),
 }));
 
 vi.mock("@/lib/db/client", () => ({
   prisma: {
+    $transaction: transactionMock,
     boardLink: {
       aggregate: aggregateMock,
       create: createMock,
@@ -28,6 +30,7 @@ const {
   getNextBoardLinkPosition,
   recompactBoardLinkPositions,
   removeLinkFromBoard,
+  reorderBoardLinks,
 } = await import("./board-links");
 
 describe("src/lib/db/board-links.ts", () => {
@@ -111,6 +114,40 @@ describe("src/lib/db/board-links.ts", () => {
       where: { id: "bl-3" },
       data: { position: 2 },
     });
+  });
+
+  it("reorders board links in a transaction", async () => {
+    updateMock
+      .mockResolvedValueOnce({ id: "bl-2", boardId: "board-123", linkId: "link-2", position: 0 })
+      .mockResolvedValueOnce({ id: "bl-1", boardId: "board-123", linkId: "link-1", position: 1 });
+    transactionMock.mockImplementation(async (operations: Promise<unknown>[]) => Promise.all(operations));
+
+    await expect(reorderBoardLinks("board-123", ["link-2", "link-1"]))
+      .resolves.toEqual([
+        { id: "bl-2", boardId: "board-123", linkId: "link-2", position: 0 },
+        { id: "bl-1", boardId: "board-123", linkId: "link-1", position: 1 },
+      ]);
+
+    expect(updateMock).toHaveBeenNthCalledWith(1, {
+      where: {
+        boardId_linkId: {
+          boardId: "board-123",
+          linkId: "link-2",
+        },
+      },
+      data: { position: 0 },
+    });
+    expect(updateMock).toHaveBeenNthCalledWith(2, {
+      where: {
+        boardId_linkId: {
+          boardId: "board-123",
+          linkId: "link-1",
+        },
+      },
+      data: { position: 1 },
+    });
+    expect(transactionMock).toHaveBeenCalledTimes(1);
+    expect(transactionMock.mock.calls[0]?.[0]).toHaveLength(2);
   });
 
   it("returns ordered board links with link metadata", async () => {

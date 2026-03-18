@@ -72,6 +72,10 @@ export const addBoardLinkSchema = z.object({
   linkId: z.uuid("Select a valid link"),
 });
 
+export const reorderBoardLinksSchema = z.object({
+  linkIds: z.array(z.uuid("Select valid links")).min(1, "Select at least one link"),
+});
+
 export const boardListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
   offset: z.coerce.number().int().min(0).default(0),
@@ -82,4 +86,5 @@ export type CreateBoardSchemaInput = z.input<typeof createBoardSchema>;
 export type UpdateBoardInput = z.output<typeof updateBoardSchema>;
 export type UpdateBoardSchemaInput = z.input<typeof updateBoardSchema>;
 export type AddBoardLinkInput = z.output<typeof addBoardLinkSchema>;
+export type ReorderBoardLinksInput = z.output<typeof reorderBoardLinksSchema>;
 export type BoardListQuery = z.output<typeof boardListQuerySchema>;

@@ -28,19 +28,28 @@ type LinkListResponse = {
 };
 
 type MutationResponse = {
-  data?: {
-    id: string;
-    boardId: string;
-    linkId: string;
-    position: number;
-    addedAt: string;
-  };
+  data?:
+    | {
+        id: string;
+        boardId: string;
+        linkId: string;
+        position: number;
+        addedAt: string;
+      }
+    | Array<{
+        id: string;
+        boardId: string;
+        linkId: string;
+        position: number;
+        addedAt?: string;
+      }>;
   error?: {
     code?: string;
     message?: string;
     details?: {
       fields?: {
         linkId?: string;
+        linkIds?: string;
       };
     };
   };
@@ -50,14 +59,39 @@ function truncateUrl(value: string) {
   return value.length > 48 ? `${value.slice(0, 45)}...` : value;
 }
 
+function normalizeBoardLinks(items: BoardLinkItem[]) {
+  return [...items]
+    .sort((left, right) => left.position - right.position)
+    .map((item, index) => ({
+      ...item,
+      position: index,
+    }));
+}
+
+function reorderItems(items: BoardLinkItem[], fromIndex: number, toIndex: number) {
+  const nextItems = [...items];
+  const [movedItem] = nextItems.splice(fromIndex, 1);
+
+  if (!movedItem) {
+    return items;
+  }
+
+  nextItems.splice(toIndex, 0, movedItem);
+  return nextItems.map((item, index) => ({
+    ...item,
+    position: index,
+  }));
+}
+
 export function BoardLinkAdd({ boardId, initialLinks }: { boardId: string; initialLinks: BoardLinkItem[] }) {
   const router = useRouter();
-  const [boardLinks, setBoardLinks] = useState(initialLinks);
+  const [boardLinks, setBoardLinks] = useState(() => normalizeBoardLinks(initialLinks));
   const [availableLinks, setAvailableLinks] = useState<LinkOption[]>([]);
   const [selectedLinkId, setSelectedLinkId] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRemovingId, setIsRemovingId] = useState<string | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -130,7 +164,7 @@ export function BoardLinkAdd({ boardId, initialLinks }: { boardId: string; initi
       });
       const payload = (await response.json()) as MutationResponse;
 
-      if (!response.ok || !payload.data) {
+      if (!response.ok || !payload.data || Array.isArray(payload.data)) {
         setFormError(
           payload.error?.details?.fields?.linkId ?? payload.error?.message ?? "Unable to add link right now.",
         );
@@ -146,14 +180,16 @@ export function BoardLinkAdd({ boardId, initialLinks }: { boardId: string; initi
         return;
       }
 
-      setBoardLinks((current) => [
-        ...current,
-        {
-          ...payload.data,
-          addedAt: payload.data.addedAt,
-          link: addedLink,
-        },
-      ]);
+      setBoardLinks((current) =>
+        normalizeBoardLinks([
+          ...current,
+          {
+            ...payload.data,
+            addedAt: payload.data.addedAt,
+            link: addedLink,
+          },
+        ]),
+      );
       setSelectedLinkId("");
       router.refresh();
     } catch {
@@ -189,18 +225,63 @@ export function BoardLinkAdd({ boardId, initialLinks }: { boardId: string; initi
       }
 
       setBoardLinks((current) =>
-        current
-          .filter((item) => item.linkId !== linkId)
-          .map((item, index) => ({
-            ...item,
-            position: index,
-          })),
+        normalizeBoardLinks(current.filter((item) => item.linkId !== linkId)),
       );
       router.refresh();
     } catch {
       setFormError("Unable to remove link right now.");
     } finally {
       setIsRemovingId(null);
+    }
+  }
+
+  async function handleMove(linkId: string, direction: "up" | "down") {
+    const currentIndex = boardLinks.findIndex((item) => item.linkId === linkId);
+
+    if (currentIndex === -1) {
+      return;
+    }
+
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+    if (targetIndex < 0 || targetIndex >= boardLinks.length) {
+      return;
+    }
+
+    const previousBoardLinks = boardLinks;
+    const nextBoardLinks = reorderItems(boardLinks, currentIndex, targetIndex);
+
+    setBoardLinks(nextBoardLinks);
+    setIsReordering(true);
+    setFormError(null);
+
+    try {
+      const response = await fetch(`/api/v1/boards/${boardId}/links/reorder`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          linkIds: nextBoardLinks.map((item) => item.linkId),
+        }),
+      });
+      const payload = (await response.json()) as MutationResponse;
+
+      if (!response.ok) {
+        setBoardLinks(previousBoardLinks);
+        setFormError(
+          payload.error?.details?.fields?.linkIds ?? payload.error?.message ?? "Unable to reorder links right now.",
+        );
+        return;
+      }
+
+      router.refresh();
+    } catch {
+      setBoardLinks(previousBoardLinks);
+      setFormError("Unable to reorder links right now.");
+    } finally {
+      setIsReordering(false);
     }
   }
 
@@ -220,7 +301,7 @@ export function BoardLinkAdd({ boardId, initialLinks }: { boardId: string; initi
             id="board-link-id"
             value={selectedLinkId}
             onChange={(event) => setSelectedLinkId(event.target.value)}
-            disabled={loading || isSubmitting || availableOptions.length === 0}
+            disabled={loading || isSubmitting || isReordering || availableOptions.length === 0}
             className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 disabled:cursor-not-allowed disabled:opacity-70"
           >
             <option value="">{loading ? "Loading links..." : availableOptions.length > 0 ? "Select a link" : "No available links"}</option>
@@ -232,7 +313,7 @@ export function BoardLinkAdd({ boardId, initialLinks }: { boardId: string; initi
           </select>
           <button
             type="submit"
-            disabled={loading || isSubmitting || availableOptions.length === 0}
+            disabled={loading || isSubmitting || isReordering || availableOptions.length === 0}
             className="rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isSubmitting ? "Adding..." : "Add link"}
@@ -247,39 +328,65 @@ export function BoardLinkAdd({ boardId, initialLinks }: { boardId: string; initi
         <p className="text-sm text-zinc-500">This board does not contain any links yet.</p>
       ) : (
         <ul className="space-y-3">
-          {boardLinks.map((item) => (
-            <li
-              key={item.id}
-              className="flex flex-col gap-4 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-4 md:flex-row md:items-start md:justify-between"
-            >
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-semibold text-zinc-100">{item.link.title ?? item.link.slug}</p>
-                  <span className="rounded-full border border-zinc-700 px-2 py-1 text-[11px] uppercase tracking-[0.2em] text-zinc-400">
-                    {item.link.slug}
-                  </span>
-                </div>
-                <p className="text-sm text-zinc-400">{truncateUrl(item.link.targetUrl)}</p>
-                {item.link.tags.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {item.link.tags.map((tag) => (
-                      <span key={tag} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-300">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-              <button
-                type="button"
-                onClick={() => void handleRemove(item.linkId)}
-                disabled={isRemovingId === item.linkId}
-                className="inline-flex items-center justify-center rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-200 transition hover:border-rose-400 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
+          {boardLinks.map((item, index) => {
+            const isFirst = index === 0;
+            const isLast = index === boardLinks.length - 1;
+            const controlsDisabled = isRemovingId !== null || isReordering;
+
+            return (
+              <li
+                key={item.id}
+                className="flex flex-col gap-4 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-4 md:flex-row md:items-start md:justify-between"
               >
-                {isRemovingId === item.linkId ? "Removing..." : "Remove"}
-              </button>
-            </li>
-          ))}
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-zinc-100">{item.link.title ?? item.link.slug}</p>
+                    <span className="rounded-full border border-zinc-700 px-2 py-1 text-[11px] uppercase tracking-[0.2em] text-zinc-400">
+                      {item.link.slug}
+                    </span>
+                  </div>
+                  <p className="text-sm text-zinc-400">{truncateUrl(item.link.targetUrl)}</p>
+                  {item.link.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {item.link.tags.map((tag) => (
+                        <span key={tag} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-300">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => void handleMove(item.linkId, "up")}
+                    disabled={isFirst || controlsDisabled}
+                    aria-label={`Move ${item.link.title ?? item.link.slug} up`}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-700 text-sm font-semibold text-zinc-300 transition hover:border-emerald-400/60 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleMove(item.linkId, "down")}
+                    disabled={isLast || controlsDisabled}
+                    aria-label={`Move ${item.link.title ?? item.link.slug} down`}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-700 text-sm font-semibold text-zinc-300 transition hover:border-emerald-400/60 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleRemove(item.linkId)}
+                    disabled={isRemovingId === item.linkId || isReordering}
+                    className="inline-flex items-center justify-center rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-200 transition hover:border-rose-400 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isRemovingId === item.linkId ? "Removing..." : "Remove"}
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
