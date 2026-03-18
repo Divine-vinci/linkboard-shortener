@@ -210,7 +210,10 @@ const nullableTagsSchema = z.preprocess(
     .optional(),
 );
 
+export const optionalHttpUrlSchema = httpUrlSchema.optional();
+
 const updateLinkFieldsSchema = z.object({
+  targetUrl: optionalHttpUrlSchema,
   title: nullableTitleSchema,
   description: nullableDescriptionSchema,
   tags: nullableTagsSchema,
@@ -231,8 +234,9 @@ export const updateLinkMetadataSchema = updateLinkFieldsSchema
     },
   );
 
-export const updateLinkExpirationSchema = updateLinkFieldsSchema.refine(
+export const updateLinkSchema = updateLinkFieldsSchema.refine(
   (value) =>
+    value.targetUrl !== undefined ||
     value.title !== undefined ||
     value.description !== undefined ||
     value.tags !== undefined ||
@@ -247,5 +251,5 @@ export type CreateLinkSchemaInput = z.input<typeof createLinkSchema>;
 export type CreateLinkInput = z.output<typeof createLinkSchema>;
 export type UpdateLinkMetadataSchemaInput = z.input<typeof updateLinkMetadataSchema>;
 export type UpdateLinkMetadataInput = z.output<typeof updateLinkMetadataSchema>;
-export type UpdateLinkExpirationSchemaInput = z.input<typeof updateLinkExpirationSchema>;
-export type UpdateLinkExpirationInput = z.output<typeof updateLinkExpirationSchema>;
+export type UpdateLinkSchemaInput = z.input<typeof updateLinkSchema>;
+export type UpdateLinkInput = z.output<typeof updateLinkSchema>;

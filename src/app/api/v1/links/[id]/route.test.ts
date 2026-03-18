@@ -39,6 +39,68 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
     vi.clearAllMocks();
   });
 
+  it("updates targetUrl only and preserves the slug", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.updateLink).mockResolvedValue(
+      buildLink({ targetUrl: "https://example.com/updated" }),
+    );
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "PATCH",
+        body: JSON.stringify({ targetUrl: " https://example.com/updated " }),
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(links.updateLink).toHaveBeenCalledWith("link-123", "user-123", {
+      targetUrl: "https://example.com/updated",
+    });
+    await expect(response.json()).resolves.toEqual({
+      data: expect.objectContaining({
+        slug: "meta123",
+        targetUrl: "https://example.com/updated",
+      }),
+    });
+  });
+
+  it("updates targetUrl and metadata in one request", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.updateLink).mockResolvedValue(
+      buildLink({ targetUrl: "https://example.com/new", title: "Updated title" }),
+    );
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "PATCH",
+        body: JSON.stringify({
+          targetUrl: "https://example.com/new",
+          title: "  Updated title  ",
+        }),
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(links.updateLink).toHaveBeenCalledWith("link-123", "user-123", {
+      targetUrl: "https://example.com/new",
+      title: "Updated title",
+    });
+    await expect(response.json()).resolves.toEqual({
+      data: expect.objectContaining({
+        targetUrl: "https://example.com/new",
+        title: "Updated title",
+      }),
+    });
+  });
+
   it("updates link metadata and returns the updated link", async () => {
     vi.mocked(mockedAuth).mockResolvedValue({
       user: { id: "user-123", email: "user@example.com" },
@@ -204,6 +266,122 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
     });
   });
 
+  it("returns 400 for malformed targetUrl payloads", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "PATCH",
+        body: JSON.stringify({ targetUrl: "not-a-url" }),
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid link update input",
+        details: {
+          fields: {
+            targetUrl: "Enter a valid URL",
+          },
+        },
+      },
+    });
+    expect(links.updateLink).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for non-http targetUrl payloads", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "PATCH",
+        body: JSON.stringify({ targetUrl: "ftp://example.com" }),
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid link update input",
+        details: {
+          fields: {
+            targetUrl: "URL must start with http:// or https://",
+          },
+        },
+      },
+    });
+    expect(links.updateLink).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for empty-string targetUrl payloads", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "PATCH",
+        body: JSON.stringify({ targetUrl: "" }),
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid link update input",
+        details: {
+          fields: {
+            targetUrl: "Target URL is required",
+          },
+        },
+      },
+    });
+    expect(links.updateLink).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for null targetUrl payloads", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "PATCH",
+        body: JSON.stringify({ targetUrl: null }),
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid link update input",
+        details: {
+          fields: {
+            targetUrl: "Target URL is required",
+          },
+        },
+      },
+    });
+    expect(links.updateLink).not.toHaveBeenCalled();
+  });
+
   it("returns 400 for invalid metadata payloads", async () => {
     vi.mocked(mockedAuth).mockResolvedValue({
       user: { id: "user-123", email: "user@example.com" },
@@ -222,7 +400,7 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
     await expect(response.json()).resolves.toEqual({
       error: {
         code: "VALIDATION_ERROR",
-        message: "Invalid link metadata input",
+        message: "Invalid link update input",
         details: {
           fields: {
             tags: "Each tag must be at most 24 characters",
@@ -251,7 +429,7 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
     await expect(response.json()).resolves.toEqual({
       error: {
         code: "VALIDATION_ERROR",
-        message: "Invalid link metadata input",
+        message: "Invalid link update input",
         details: {
           fields: {
             expiresAt: "Expiration must be in the future",
@@ -268,7 +446,7 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
     const response = await PATCH(
       new Request("http://localhost:3000/api/v1/links/link-123", {
         method: "PATCH",
-        body: JSON.stringify({ title: "Nope" }),
+        body: JSON.stringify({ targetUrl: "https://example.com/nope" }),
       }),
       { params: Promise.resolve({ id: "link-123" }) },
     );
@@ -282,7 +460,7 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
     });
   });
 
-  it("returns 400 for empty patch body with no metadata fields", async () => {
+  it("returns 400 for empty patch body with no updatable fields", async () => {
     vi.mocked(mockedAuth).mockResolvedValue({
       user: { id: "user-123", email: "user@example.com" },
       expires: "2026-03-18T18:00:00.000Z",
@@ -310,7 +488,7 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
     const response = await PATCH(
       new Request("http://localhost:3000/api/v1/links/link-404", {
         method: "PATCH",
-        body: JSON.stringify({ title: "Still nope" }),
+        body: JSON.stringify({ targetUrl: "https://example.com/still-nope" }),
       }),
       { params: Promise.resolve({ id: "link-404" }) },
     );

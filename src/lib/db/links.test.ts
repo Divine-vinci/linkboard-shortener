@@ -30,7 +30,7 @@ try {
 }
 
 if (!dbReady) {
-  process.stderr.write("⚠️  Link table unavailable — skipping link CRUD tests. Apply migrations to run them.\n");
+  process.stderr.write(`⚠️  Link table unavailable — skipping link CRUD tests. Apply migrations to run them.\n`);
 }
 
 describe.skipIf(!dbReady)("src/lib/db/links.ts", () => {
@@ -120,6 +120,15 @@ describe.skipIf(!dbReady)("src/lib/db/links.ts", () => {
       description: "Updated description",
       tags: ["docs", "launch"],
       expiresAt: updatedExpiresAt,
+    });
+
+    const targetUrlUpdated = await updateLink(link.id, owner.id, {
+      targetUrl: "https://example.com/updated",
+    });
+    expect(targetUrlUpdated).toMatchObject({
+      id: link.id,
+      slug: link.slug,
+      targetUrl: "https://example.com/updated",
     });
 
     const cleared = await updateLink(link.id, owner.id, { expiresAt: null });

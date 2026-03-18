@@ -5,8 +5,8 @@ import {
   customSlugSchema,
   optionalExpiresAtSchema,
   RESERVED_SLUGS,
-  updateLinkExpirationSchema,
   updateLinkMetadataSchema,
+  updateLinkSchema,
 } from "@/lib/validations/link";
 
 describe("src/lib/validations/link.ts", () => {
@@ -258,21 +258,77 @@ describe("src/lib/validations/link.ts", () => {
     });
   });
 
-  describe("updateLinkExpirationSchema", () => {
+  describe("updateLinkSchema", () => {
     it("accepts future expiration updates", () => {
       const expiresAt = "2099-03-22T12:00:00.000Z";
 
-      expect(updateLinkExpirationSchema.parse({ expiresAt })).toEqual({
+      expect(updateLinkSchema.parse({ expiresAt })).toEqual({
         expiresAt: new Date(expiresAt),
       });
     });
 
     it("accepts null to clear expiration", () => {
-      expect(updateLinkExpirationSchema.parse({ expiresAt: null })).toEqual({ expiresAt: null });
+      expect(updateLinkSchema.parse({ expiresAt: null })).toEqual({ expiresAt: null });
+    });
+
+    it("accepts targetUrl-only updates", () => {
+      expect(updateLinkSchema.parse({ targetUrl: " https://example.com/updated " })).toEqual({
+        targetUrl: "https://example.com/updated",
+      });
+    });
+
+    it("accepts targetUrl with other fields in one update", () => {
+      expect(
+        updateLinkSchema.parse({
+          targetUrl: "https://example.com/updated",
+          title: " Updated title ",
+        }),
+      ).toEqual({
+        targetUrl: "https://example.com/updated",
+        title: "Updated title",
+      });
+    });
+
+    it("rejects malformed targetUrl updates", () => {
+      const parsed = updateLinkSchema.safeParse({ targetUrl: "not-a-url" });
+
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.flatten().fieldErrors.targetUrl).toContain("Enter a valid URL");
+      }
+    });
+
+    it("rejects non-http targetUrl updates", () => {
+      const parsed = updateLinkSchema.safeParse({ targetUrl: "ftp://example.com" });
+
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.flatten().fieldErrors.targetUrl).toContain(
+          "URL must start with http:// or https://",
+        );
+      }
+    });
+
+    it("rejects empty-string targetUrl updates", () => {
+      const parsed = updateLinkSchema.safeParse({ targetUrl: "" });
+
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.flatten().fieldErrors.targetUrl).toContain("Target URL is required");
+      }
+    });
+
+    it("rejects null targetUrl updates", () => {
+      const parsed = updateLinkSchema.safeParse({ targetUrl: null });
+
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(parsed.error.flatten().fieldErrors.targetUrl).toContain("Target URL is required");
+      }
     });
 
     it("rejects past expiration updates", () => {
-      const parsed = updateLinkExpirationSchema.safeParse({ expiresAt: "2020-03-20T15:30:00.000Z" });
+      const parsed = updateLinkSchema.safeParse({ expiresAt: "2020-03-20T15:30:00.000Z" });
 
       expect(parsed.success).toBe(false);
       if (!parsed.success) {
@@ -280,8 +336,14 @@ describe("src/lib/validations/link.ts", () => {
       }
     });
 
+    it("accepts undefined targetUrl when another field is present", () => {
+      expect(updateLinkSchema.parse({ targetUrl: undefined, title: "Updated" })).toEqual({
+        title: "Updated",
+      });
+    });
+
     it("rejects an empty patch body", () => {
-      const parsed = updateLinkExpirationSchema.safeParse({});
+      const parsed = updateLinkSchema.safeParse({});
 
       expect(parsed.success).toBe(false);
       if (!parsed.success) {

@@ -6,7 +6,7 @@ import { updateLink } from "@/lib/db/links";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
-import { updateLinkExpirationSchema } from "@/lib/validations/link";
+import { updateLinkSchema } from "@/lib/validations/link";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -22,11 +22,11 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   try {
     const { id } = await context.params;
     const json = await request.json();
-    const parsed = updateLinkExpirationSchema.safeParse(json);
+    const parsed = updateLinkSchema.safeParse(json);
 
     if (!parsed.success) {
       return NextResponse.json(
-        errorResponse(new AppError("VALIDATION_ERROR", "Invalid link metadata input", 400), {
+        errorResponse(new AppError("VALIDATION_ERROR", "Invalid link update input", 400), {
           fields: fieldErrorsFromZod(parsed.error),
         }),
         { status: 400 },
@@ -51,7 +51,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       );
     }
 
-    logger.error("links.update_metadata.unexpected_error", {
+    logger.error("links.update.unexpected_error", {
       error: error instanceof Error ? error.message : String(error),
       userId,
     });

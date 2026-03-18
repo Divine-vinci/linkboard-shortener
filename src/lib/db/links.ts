@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db/client";
 export type LinkMetadataData = Pick<Link, "title" | "description" | "tags">;
 export type CreateLinkData = Pick<Link, "slug" | "targetUrl" | "userId"> & Partial<LinkMetadataData> & { expiresAt?: Date | null };
 export type UpdateLinkData = {
+  targetUrl?: string;
   title?: string | null;
   description?: string | null;
   tags?: string[];

@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 2.4 Link Expiration
+- Current story: Story 2.5 Update Link Target URL
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Story 2.4 dev-story completed with expiration support changes; code-review ACP session has been started.
-- Next step: Poll ACP session agent:claude:acp:200ea88b-c1d6-4ba9-b294-bee29bf6e137 for code-review completion
+- Last action: Heartbeat recovery verified Story 2.5 code-review output landed locally, completed the BMAD code-review workflow, and re-ran validation (180 tests passed, lint passed, build passed).
+- Next step: Start workflow: create-story
 
 ## Latest Completed Session
 - subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
@@ -22,9 +22,14 @@
 - subagent_status: recovered-locally
 
 ## Current ACP Session
-- acp_session_key: agent:claude:acp:200ea88b-c1d6-4ba9-b294-bee29bf6e137
+- acp_session_key: agent:claude:acp:f218bbd5-104a-4883-b916-da4b368a0006
 - acp_workflow: code-review
-- acp_status: running
+- acp_status: completed
+
+## Previous ACP Session
+- acp_session_key: agent:claude:acp:14eedc69-6c14-45a2-a0c8-f8405a2ee5ca
+- acp_workflow: create-story
+- acp_status: completed
 
 ## Previous ACP Session
 - acp_session_key: agent:claude:acp:c8ab5077-d527-417b-b7e2-d592fab8ffea
@@ -61,8 +66,8 @@
 - [x] Story 2.1: Create Short Links with Auto-Generated Slugs (commit: 994e561)
 - [x] Story 2.2: Custom Slug Support and Validation
 - [x] Story 2.3: Link Metadata Management (commit: 9091138)
-- [ ] Story 2.4: Link Expiration
-- [ ] Story 2.5: Update Link Target URL
+- [x] Story 2.4: Link Expiration (commit: 5f5bbed)
+- [x] Story 2.5: Update Link Target URL (commit: pending)
 - [ ] Story 2.6: Delete Links
 - [ ] Story 2.7: Redirect Engine with Redis Caching
 - [ ] Story 2.8: Link Library with Search and Filter
@@ -105,6 +110,14 @@
 - [x] dev-story — Story 2.3 (output: implementation-artifacts/2-3-dev-story-result.md)
 - [x] code-review — Story 2.3 (output: implementation-artifacts/2-3-code-review.md)
 - [x] Story 2.3 loop complete (commit: 9091138)
+- [x] create-story — Story 2.4
+- [x] dev-story — Story 2.4 (output: implementation-artifacts/2-4-dev-story-result.md)
+- [x] code-review — Story 2.4
+- [x] Story 2.4 loop complete (commit: 5f5bbed)
+- [x] create-story — Story 2.5 (output: implementation-artifacts/2-5-update-link-target-url.md)
+- [x] dev-story — Story 2.5 (output: implementation-artifacts/2-5-dev-story-result.md)
+- [x] code-review — Story 2.5
+- [x] Story 2.5 loop complete (commit: pending)
 
 ## Blockers
 - Mission Control task mapping is incomplete in progress.md; local repo remains source of truth.
