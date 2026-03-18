@@ -210,16 +210,16 @@ export function BoardLinkAdd({ boardId, initialLinks }: { boardId: string; initi
         return;
       }
 
-      setBoardLinks((current) =>
-        normalizeBoardLinks([
-          ...current,
-          {
-            ...payload.data,
-            addedAt: payload.data.addedAt,
-            link: addedLink,
-          },
-        ]),
-      );
+      const addedBoardLink: BoardLinkItem = {
+        id: payload.data.id,
+        boardId: payload.data.boardId,
+        linkId: payload.data.linkId,
+        position: payload.data.position,
+        addedAt: payload.data.addedAt,
+        link: addedLink,
+      };
+
+      setBoardLinks((current) => normalizeBoardLinks([...current, addedBoardLink]));
       setSelectedLinkId("");
       router.refresh();
     } catch {

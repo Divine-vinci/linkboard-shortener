@@ -10,7 +10,7 @@ function emit(level: LogLevel, message: string, context: LogContext = {}) {
     ...context,
   };
 
-  process.stdout.write(`${JSON.stringify(entry)}\n`);
+  console[level](JSON.stringify(entry));
 }
 
 export const logger = {

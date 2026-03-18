@@ -47,8 +47,14 @@ export default async function BoardDetailPage({ params }: { params: Promise<{ id
             </span>
             <div className="flex flex-wrap gap-3">
               <Link
+                href={`/dashboard/boards/${board.id}/analytics`}
+                className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-100 transition hover:border-emerald-400/60 hover:text-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40"
+              >
+                Analytics
+              </Link>
+              <Link
                 href={`/dashboard/boards/${board.id}/edit`}
-                className="inline-flex items-center justify-center rounded-2xl border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-100 transition hover:border-emerald-400/60 hover:text-emerald-300"
+                className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-100 transition hover:border-emerald-400/60 hover:text-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40"
               >
                 Edit board
               </Link>

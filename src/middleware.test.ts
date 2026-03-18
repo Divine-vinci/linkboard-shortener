@@ -26,14 +26,6 @@ vi.mock("next-auth/jwt", () => ({
   getToken: getTokenMock,
 }));
 
-vi.mock("next/server", async () => {
-  const actual = await vi.importActual<typeof import("next/server")>("next/server");
-  return {
-    ...actual,
-    waitUntil: waitUntilMock,
-  };
-});
-
 vi.mock("@/lib/cache/redirect", () => ({
   getRedirectCache: getRedirectCacheMock,
   setRedirectCache: setRedirectCacheMock,
@@ -70,6 +62,12 @@ function createRequest(pathname: string) {
   };
 }
 
+function createEvent() {
+  return {
+    waitUntil: waitUntilMock,
+  };
+}
+
 describe("src/middleware.ts", () => {
   beforeEach(() => {
     getTokenMock.mockReset();
@@ -96,7 +94,7 @@ describe("src/middleware.ts", () => {
     });
 
     const request = createRequest("/docs");
-    const response = await middleware(request as never);
+    const response = await middleware(request as never, createEvent() as never);
 
     expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("https://example.com/docs");
@@ -115,7 +113,7 @@ describe("src/middleware.ts", () => {
     });
 
     const request = createRequest("/docs");
-    const response = await middleware(request as never);
+    const response = await middleware(request as never, createEvent() as never);
 
     expect(response.status).toBe(301);
     expect(response.headers.get("location")).toBe("https://example.com/docs");
@@ -137,7 +135,7 @@ describe("src/middleware.ts", () => {
       expiresAt: "2020-01-01T00:00:00.000Z",
     });
 
-    const response = await middleware(createRequest("/docs") as never);
+    const response = await middleware(createRequest("/docs") as never, createEvent() as never);
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("http://localhost:3000/expired");
@@ -156,7 +154,7 @@ describe("src/middleware.ts", () => {
       expiresAt: new Date("2020-01-01T00:00:00.000Z"),
     });
 
-    const response = await middleware(createRequest("/old") as never);
+    const response = await middleware(createRequest("/old") as never, createEvent() as never);
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("http://localhost:3000/expired");
@@ -166,7 +164,7 @@ describe("src/middleware.ts", () => {
   });
 
   it("passes through non-existent slugs to next routing", async () => {
-    const response = await middleware(createRequest("/missing") as never);
+    const response = await middleware(createRequest("/missing") as never, createEvent() as never);
 
     expect(response.headers.get("x-middleware-next")).toBe("1");
     expect(findLinkBySlugMock).toHaveBeenCalledWith("missing");
@@ -174,7 +172,7 @@ describe("src/middleware.ts", () => {
   });
 
   it("does not intercept reserved paths", async () => {
-    const response = await middleware(createRequest("/api/links") as never);
+    const response = await middleware(createRequest("/api/links") as never, createEvent() as never);
 
     expect(response.headers.get("x-middleware-next")).toBe("1");
     expect(getRedirectCacheMock).not.toHaveBeenCalled();
@@ -183,7 +181,7 @@ describe("src/middleware.ts", () => {
   });
 
   it("keeps auth redirects for protected routes", async () => {
-    const response = await middleware(createRequest("/dashboard") as never);
+    const response = await middleware(createRequest("/dashboard") as never, createEvent() as never);
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("http://localhost:3000/login");

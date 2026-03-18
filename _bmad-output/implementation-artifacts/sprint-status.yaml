@@ -90,8 +90,8 @@ development_status:
   epic-6: in-progress
   6-1-click-event-capture-during-redirects: done
   6-2-link-analytics-dashboard-clicks-and-trends: done
-  6-3-referrer-and-geographic-analytics: ready-for-dev
-  6-4-board-level-aggregate-analytics: backlog
+  6-3-referrer-and-geographic-analytics: review
+  6-4-board-level-aggregate-analytics: done
   epic-6-retrospective: optional
 
   # Epic 7: API Access & Developer Experience

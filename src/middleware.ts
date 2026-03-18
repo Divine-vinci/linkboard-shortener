@@ -1,4 +1,4 @@
-import { NextResponse, waitUntil, type NextRequest } from "next/server";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 import { env } from "@/config/env";
@@ -51,7 +51,22 @@ function redirectToExpiredPage(request: NextRequest) {
   return NextResponse.redirect(new URL("/expired", request.url));
 }
 
-async function resolveShortLinkRedirect(request: NextRequest) {
+function scheduleClickCapture(
+  event: NextFetchEvent | undefined,
+  linkId: string,
+  request: NextRequest,
+) {
+  const capturePromise = captureClickEvent(linkId, request);
+
+  if (event) {
+    event.waitUntil(capturePromise);
+    return;
+  }
+
+  void capturePromise;
+}
+
+async function resolveShortLinkRedirect(request: NextRequest, event?: NextFetchEvent) {
   const slug = getSlugFromPathname(request.nextUrl.pathname);
 
   if (!slug) {
@@ -67,7 +82,7 @@ async function resolveShortLinkRedirect(request: NextRequest) {
     }
 
     logger.info("redirect.cache_hit", { slug });
-    waitUntil(captureClickEvent(cached.linkId, request));
+    scheduleClickCapture(event, cached.linkId, request);
     return NextResponse.redirect(cached.targetUrl, { status: 301 });
   }
 
@@ -89,7 +104,7 @@ async function resolveShortLinkRedirect(request: NextRequest) {
     expiresAt: link.expiresAt?.toISOString() ?? null,
   });
 
-  waitUntil(captureClickEvent(link.id, request));
+  scheduleClickCapture(event, link.id, request);
   return NextResponse.redirect(link.targetUrl, { status: 301 });
 }
 
@@ -109,8 +124,8 @@ export function resolveAuthRedirect(pathname: string, isAuthenticated: boolean) 
   return null;
 }
 
-export async function middleware(request: NextRequest) {
-  const redirectResponse = await resolveShortLinkRedirect(request);
+export async function middleware(request: NextRequest, event: NextFetchEvent) {
+  const redirectResponse = await resolveShortLinkRedirect(request, event);
 
   if (redirectResponse) {
     return redirectResponse;
