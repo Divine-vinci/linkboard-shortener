@@ -74,8 +74,8 @@ development_status:
   epic-3-retrospective: optional
 
   # Epic 4: Dashboard & Navigation
-  epic-4: backlog
-  4-1-dashboard-layout-and-sidebar-navigation: backlog
+  epic-4: in-progress
+  4-1-dashboard-layout-and-sidebar-navigation: review
   4-2-dashboard-home-with-overview-and-quick-actions: backlog
   epic-4-retrospective: optional
 

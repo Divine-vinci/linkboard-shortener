@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 3.5 Board Detail View with Link Metadata (IN REVIEW)
+- Current story: Story 4.1 Dashboard Layout and Sidebar Navigation (IN REVIEW)
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Polled Story 3.5 create-story completion, confirmed Story 3.5 dev-story output exists, then launched code-review via ACP session `agent:claude:acp:41f31f10-a960-4343-8fdd-7499f44b76ba`.
-- Next step: Poll ACP session agent:claude:acp:41f31f10-a960-4343-8fdd-7499f44b76ba for Story 3.5 code-review completion
+- Last action: Confirmed Story 4.1 dev-story output and launched code-review via ACP session `agent:claude:acp:77ff62d6-4cc1-490d-b5b9-4684da7d5bde`.
+- Next step: Poll ACP session agent:claude:acp:77ff62d6-4cc1-490d-b5b9-4684da7d5bde for Story 4.1 code-review completion
 
 ## Latest Completed Session
 - subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
@@ -91,7 +91,8 @@
 - [x] Story 3.2: Edit and Delete Boards (commit: de7d372)
 - [x] Story 3.3: Add and Remove Links from Boards (commit: e5cb1f1)
 - [x] Story 3.4: Reorder Links Within a Board (commit: dd4895d)
-- [ ] Story 3.5: Board Detail View with Link Metadata (dev complete; awaiting code-review)
+- [x] Story 3.5: Board Detail View with Link Metadata (commit: 41ac9cb)
+- [ ] Story 4.1: Dashboard Layout and Sidebar Navigation (dev complete; awaiting code-review)
 
 ## Completed Workflows
 - [x] project initialization
@@ -192,3 +193,6 @@
 - Pre-existing build failure remains: `next build` fails because `src/lib/logger.ts` uses `process.stdout` in Edge runtime contexts; Story 3.1 tests/lint pass and code-review is complete, but this broader issue is still unresolved.
 - Mission Control task mapping is incomplete in progress.md; local repo remains source of truth.
 - Claude ACP code-review sessions produced no transcript output multiple times in the sprint; fallback/local reconciliation was used where needed, including Story 2.8 after timeout/no-output.
+
+- [x] create-story — Story 4.1
+- [x] dev-story — Story 4.1 (output: implementation-artifacts/4-1-dev-story-result.md)
