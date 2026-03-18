@@ -78,11 +78,20 @@ describe("src/app/(public)/b/[slug]/page.tsx", () => {
         description: "Launch-ready references",
         url: "/b/creator-kit",
         type: "website",
+        images: [
+          {
+            url: "/og-default.png",
+            width: 1200,
+            height: 630,
+            alt: "Creator Kit",
+          },
+        ],
       },
       twitter: {
-        card: "summary",
+        card: "summary_large_image",
         title: "Creator Kit",
         description: "Launch-ready references",
+        images: ["/og-default.png"],
       },
     });
   });
@@ -93,6 +102,33 @@ describe("src/app/(public)/b/[slug]/page.tsx", () => {
     await expect(generateMetadata({ params: Promise.resolve({ slug: "missing" }) })).resolves.toEqual({
       title: "Board not found — Linkboard",
       description: "This board is unavailable.",
+    });
+  });
+
+  it("falls back to generated descriptions while keeping OG and Twitter image metadata", async () => {
+    findPublicBoardBySlugMock.mockResolvedValue({
+      id: "board-2",
+      name: "Founder Links",
+      slug: "founder-links",
+      description: null,
+      boardLinks: [],
+    });
+
+    await expect(generateMetadata({ params: Promise.resolve({ slug: "founder-links" }) })).resolves.toMatchObject({
+      description: "Browse Founder Links on Linkboard.",
+      openGraph: {
+        description: "Browse Founder Links on Linkboard.",
+        images: [
+          {
+            url: "/og-default.png",
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        description: "Browse Founder Links on Linkboard.",
+        images: ["/og-default.png"],
+      },
     });
   });
 });

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type PublicBoardHeaderProps = {
   board: {
     name: string;
@@ -34,12 +36,12 @@ export function PublicBoardHeader({ board }: PublicBoardHeaderProps) {
           </div>
         </dl>
 
-        <a
+        <Link
           href="/"
           className="inline-flex w-fit items-center rounded-full border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-emerald-400/50 hover:text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
         >
           Powered by Linkboard
-        </a>
+        </Link>
       </div>
     </header>
   );

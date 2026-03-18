@@ -1,3 +1,13 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Link expired — Linkboard",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
 export default function ExpiredLinkPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center px-6 text-center">
