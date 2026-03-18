@@ -1,6 +1,6 @@
 # Story 6.2: Link Analytics Dashboard — Clicks and Trends
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -26,46 +26,46 @@ So that I can understand how my links are performing over time.
 
 ## Tasks / Subtasks
 
-- [ ] Task 0: Install Recharts dependency
-  - [ ] Run `npm install recharts`
-  - [ ] Verify Recharts is added to `package.json` dependencies
+- [x] Task 0: Install Recharts dependency
+  - [x] Run `npm install recharts`
+  - [x] Verify Recharts is added to `package.json` dependencies
 
-- [ ] Task 1: Add ownership-scoped analytics read queries (AC: #1, #2, #3)
-  - [ ] Create `src/lib/db/analytics.ts`
-  - [ ] Implement `getLinkAnalyticsOverview(userId: string, linkId: string)` returning link metadata + total click count
-  - [ ] Implement `getLinkClicksTimeseries(userId: string, linkId: string, granularity: "daily" | "weekly" | "monthly")`
-  - [ ] Ensure all analytics queries join/filter on `Link.userId = userId` so users can only read their own link analytics
-  - [ ] Return stable zero-value payloads when the link has no clicks yet
-  - [ ] Add unit tests in `src/lib/db/analytics.test.ts` for ownership filtering, zero-state behavior, and aggregation buckets
+- [x] Task 1: Add ownership-scoped analytics read queries (AC: #1, #2, #3)
+  - [x] Create `src/lib/db/analytics.ts`
+  - [x] Implement `getLinkAnalyticsOverview(userId: string, linkId: string)` returning link metadata + total click count
+  - [x] Implement `getLinkClicksTimeseries(userId: string, linkId: string, granularity: "daily" | "weekly" | "monthly")`
+  - [x] Ensure all analytics queries join/filter on `Link.userId = userId` so users can only read their own link analytics
+  - [x] Return stable zero-value payloads when the link has no clicks yet
+  - [x] Add unit tests in `src/lib/db/analytics.test.ts` for ownership filtering, zero-state behavior, and aggregation buckets
 
-- [ ] Task 2: Create the link analytics page route (AC: #1, #2, #3)
-  - [ ] Create `src/app/(dashboard)/dashboard/links/[id]/analytics/page.tsx`
-  - [ ] Resolve the session user via existing dashboard auth patterns
-  - [ ] Load overview + timeseries data server-side for the selected link
-  - [ ] Handle missing/unauthorized links with the project's existing not-found pattern
-  - [ ] Render total clicks summary, aggregation controls, and chart section
-  - [ ] Render an explicit empty state with copy: `No clicks yet`
+- [x] Task 2: Create the link analytics page route (AC: #1, #2, #3)
+  - [x] Create `src/app/(dashboard)/dashboard/links/[id]/analytics/page.tsx`
+  - [x] Resolve the session user via existing dashboard auth patterns
+  - [x] Load overview + timeseries data server-side for the selected link
+  - [x] Handle missing/unauthorized links with the project's existing not-found pattern
+  - [x] Render total clicks summary, aggregation controls, and chart section
+  - [x] Render an explicit empty state with copy: `No clicks yet`
 
-- [ ] Task 3: Build reusable analytics UI components (AC: #1, #2)
-  - [ ] Create `src/components/analytics/link-analytics-header.tsx` for link slug/target context + total clicks KPI
-  - [ ] Create `src/components/analytics/clicks-timeseries-chart.tsx` using Recharts
-  - [ ] Add a daily / weekly / monthly aggregation toggle with accessible button semantics
-  - [ ] Ensure the chart has a text alternative / summary for screen readers describing the displayed dataset
-  - [ ] Ensure the zero-state is understandable without relying on chart color or visuals
-  - [ ] Add component tests for rendered totals, zero-state copy, toggle interactions, and accessible text alternatives
+- [x] Task 3: Build reusable analytics UI components (AC: #1, #2)
+  - [x] Create `src/components/analytics/link-analytics-header.tsx` for link slug/target context + total clicks KPI
+  - [x] Create `src/components/analytics/clicks-timeseries-chart.tsx` using Recharts
+  - [x] Add a daily / weekly / monthly aggregation toggle with accessible button semantics
+  - [x] Ensure the chart has a text alternative / summary for screen readers describing the displayed dataset
+  - [x] Ensure the zero-state is understandable without relying on chart color or visuals
+  - [x] Add component tests for rendered totals, zero-state copy, toggle interactions, and accessible text alternatives
 
-- [ ] Task 4: Link existing dashboard surfaces to analytics (AC: #1)
-  - [ ] Update `src/components/links/link-library.tsx` to expose a clear analytics entry point for each link
-  - [ ] Replace placeholder click/analytics affordances with navigation to the new analytics page where appropriate
-  - [ ] Preserve current edit/delete behavior and existing layout responsiveness
-  - [ ] Add/update tests covering the analytics navigation affordance
+- [x] Task 4: Link existing dashboard surfaces to analytics (AC: #1)
+  - [x] Update `src/components/links/link-library.tsx` to expose a clear analytics entry point for each link
+  - [x] Replace placeholder click/analytics affordances with navigation to the new analytics page where appropriate
+  - [x] Preserve current edit/delete behavior and existing layout responsiveness
+  - [x] Add/update tests covering the analytics navigation affordance
 
-- [ ] Task 5: Validate end-to-end analytics rendering (AC: all)
-  - [ ] Verify a link with click events shows the correct total click count and non-empty chart data
-  - [ ] Verify daily / weekly / monthly aggregation switches update the visible dataset correctly
-  - [ ] Verify a link with zero click events shows `No clicks yet` and an empty chart state
-  - [ ] Run targeted tests for analytics DB/UI/page changes
-  - [ ] Run the full test suite and lint to confirm no regressions
+- [x] Task 5: Validate end-to-end analytics rendering (AC: all)
+  - [x] Verify a link with click events shows the correct total click count and non-empty chart data
+  - [x] Verify daily / weekly / monthly aggregation switches update the visible dataset correctly
+  - [x] Verify a link with zero click events shows `No clicks yet` and an empty chart state
+  - [x] Run targeted tests for analytics DB/UI/page changes
+  - [x] Run the full test suite and lint to confirm no regressions
 
 ## Dev Notes
 
@@ -241,18 +241,60 @@ Follow existing dashboard patterns:
 
 ### Agent Model Used
 
-<!-- to be filled by dev agent -->
+openai/gpt-5.4
 
 ### Completion Notes List
 
 - Initial draft recovered by gpt-5.4 after ACP polling returned no transcript output.
 - Finalized to ready-for-dev by claude-opus-4-6 with enriched integration context, Recharts guidance, query strategy, design system patterns, and previous story learnings.
+- Implemented ownership-scoped analytics reads with `date_trunc` daily/weekly/monthly aggregation in `src/lib/db/analytics.ts`.
+- Added the per-link analytics route plus reusable analytics header/chart components and surfaced analytics navigation from `src/components/links/link-library.tsx`.
+- Validation: `npm run lint` and `npm test` passed; 391 tests passed, 9 skipped (DB-gated integration skips remain unchanged).
 
 ### File List
 
 - _bmad-output/implementation-artifacts/6-2-link-analytics-dashboard-clicks-and-trends.md
+- package.json
+- package-lock.json
+- src/lib/db/analytics.ts
+- src/lib/db/analytics.test.ts
+- src/app/(dashboard)/dashboard/links/[id]/analytics/page.tsx
+- src/app/(dashboard)/dashboard/links/[id]/analytics/page.test.tsx
+- src/components/analytics/link-analytics-header.tsx
+- src/components/analytics/link-analytics-header.test.tsx
+- src/components/analytics/clicks-timeseries-chart.tsx
+- src/components/analytics/clicks-timeseries-chart.test.tsx
+- src/components/links/link-library.tsx
+- src/components/links/link-library.test.tsx
 
 ### Change Log
 
 - 2026-03-18: Initial draft reconstructed locally (gpt-5.4).
 - 2026-03-18: Finalized to ready-for-dev with enriched dev notes (claude-opus-4-6).
+- 2026-03-18: Implemented per-link analytics dashboard, ownership-scoped DB aggregation, Recharts UI, analytics navigation entry point, and coverage for DB/UI/page flows (gpt-5.4).
+- 2026-03-18: Code review by claude-opus-4-6 — fixed 5 issues: C1 `Pick<Link>` type error in link-library.tsx, H1 added missing null-session test, H2 removed `as const` readonly incompatibility in chart test, M1 dark-themed Recharts tooltip, M2 added `target="_blank"` + `rel="noopener noreferrer"` on external link. Added `aria-label` to header section. 392 tests pass, 0 tsc errors in reviewed files.
+
+## Senior Developer Review (AI)
+
+**Reviewer:** claude-opus-4-6
+**Date:** 2026-03-18
+
+**Findings (7 total):**
+
+| ID | Severity | Description | Status |
+|----|----------|-------------|--------|
+| C1 | CRITICAL | `Pick<Link, ...>` used Next.js Link type instead of PrismaLink (`link-library.tsx:64`) | FIXED |
+| H1 | HIGH | Missing test for null/unauthenticated session in `page.test.tsx` | FIXED |
+| H2 | HIGH | `as const` on test datasets created readonly arrays incompatible with component props (`chart.test.tsx:25`) | FIXED |
+| M1 | MEDIUM | Recharts `<Tooltip />` used default white theme on dark UI (`chart.tsx:96`) | FIXED |
+| M2 | MEDIUM | External `<a href>` missing `rel="noopener noreferrer"` and `target="_blank"` (`header.tsx:18`) | FIXED |
+| L1 | LOW | Added `aria-label` to analytics header `<section>` | FIXED |
+| L2 | LOW | `_bmad-output/progress.md` in git diff but not in story File List | NOTED |
+
+**Outcome:** All HIGH and MEDIUM issues fixed. 392 tests pass, 9 skipped (existing DB-gated). `tsc --noEmit` clean for reviewed files. `npm run lint` clean.
+
+## Workflow Output
+- Story 6.2 implemented by `openai/gpt-5.4`, reviewed and fixed by `claude-opus-4-6`.
+- `npm run lint` passed.
+- `npm test` passed: 392 passed, 9 skipped (existing DB-gated skips only).
+- Story status updated to `done`.

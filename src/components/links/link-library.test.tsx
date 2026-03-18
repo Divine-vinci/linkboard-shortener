@@ -44,7 +44,7 @@ describe("src/components/links/link-library.tsx", () => {
     expect(screen.getByText("Docs to share during rollout.")).toBeInTheDocument();
     expect(screen.getByText("#docs")).toBeInTheDocument();
     expect(screen.getByText("#launch")).toBeInTheDocument();
-    expect(screen.getByText("Clicks: —")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View analytics" })).toHaveAttribute("href", "/dashboard/links/link-123/analytics");
     expect(screen.getByText("No boards")).toBeInTheDocument();
   });
 

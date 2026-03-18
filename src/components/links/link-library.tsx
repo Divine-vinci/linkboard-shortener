@@ -1,7 +1,8 @@
 "use client";
 
-import type { Link } from "@prisma/client";
+import type { Link as PrismaLink } from "@prisma/client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
@@ -13,7 +14,7 @@ function formatExpiration(expiresAt: Date) {
   }).format(expiresAt);
 }
 
-function LinkMetadataBlock({ link }: { link: Pick<Link, "title" | "description" | "tags"> }) {
+function LinkMetadataBlock({ link }: { link: Pick<PrismaLink, "title" | "description" | "tags"> }) {
   const hasMetadata = Boolean(link.title || link.description || link.tags.length > 0);
 
   if (!hasMetadata) {
@@ -61,7 +62,7 @@ function LinkExpirationBadge({ expiresAt, currentTimeMs }: { expiresAt: Date | n
 }
 
 type LinkLibraryItem = Pick<
-  Link,
+  PrismaLink,
   "id" | "slug" | "targetUrl" | "title" | "description" | "tags" | "expiresAt" | "createdAt"
 >;
 
@@ -219,7 +220,12 @@ function LinkCard({ link, currentTimeMs }: LinkCardProps) {
 
         <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
           <LinkExpirationBadge expiresAt={link.expiresAt} currentTimeMs={currentTimeMs} />
-          <span className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1">Clicks: —</span>
+          <Link
+            href={`/dashboard/links/${link.id}/analytics`}
+            className="inline-flex min-h-11 items-center rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 text-zinc-200 transition hover:border-emerald-400/50 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40"
+          >
+            View analytics
+          </Link>
           <span className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1">No boards</span>
         </div>
       </div>
