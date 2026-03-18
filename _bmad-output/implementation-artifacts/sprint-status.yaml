@@ -76,7 +76,7 @@ development_status:
   # Epic 4: Dashboard & Navigation
   epic-4: in-progress
   4-1-dashboard-layout-and-sidebar-navigation: review
-  4-2-dashboard-home-with-overview-and-quick-actions: backlog
+  4-2-dashboard-home-with-overview-and-quick-actions: done
   epic-4-retrospective: optional
 
   # Epic 5: Public Board Experience

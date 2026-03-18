@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 4.2 Dashboard Home with Overview and Quick Actions (CREATE-STORY IN PROGRESS)
+- Current story: Story 4.2 Dashboard Home with Overview and Quick Actions (IN REVIEW)
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Started create-story for Story 4.2 via ACP session `agent:claude:acp:0638bf5f-78b9-40f7-ad78-6da8e8609df8`.
-- Next step: Poll ACP session agent:claude:acp:0638bf5f-78b9-40f7-ad78-6da8e8609df8 for Story 4.2 create-story completion
+- Last action: Confirmed Story 4.2 dev-story completion and launched code-review via ACP session `agent:claude:acp:5877e281-fddc-4f4d-a3aa-06f4d349b605`.
+- Next step: Poll ACP session agent:claude:acp:5877e281-fddc-4f4d-a3aa-06f4d349b605 for Story 4.2 code-review completion
 
 ## Latest Completed Session
 - subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
@@ -93,6 +93,7 @@
 - [x] Story 3.4: Reorder Links Within a Board (commit: dd4895d)
 - [x] Story 3.5: Board Detail View with Link Metadata (commit: 41ac9cb)
 - [x] Story 4.1: Dashboard Layout and Sidebar Navigation (commit: 9054760)
+- [ ] Story 4.2: Dashboard Home with Overview and Quick Actions (dev complete; awaiting code-review)
 
 ## Completed Workflows
 - [x] project initialization

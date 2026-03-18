@@ -11,7 +11,7 @@ const [{ prisma }, linksModule, usersModule] = await Promise.all([
   import("./links"),
   import("./users"),
 ]);
-const { createLink, deleteLink, findLinkById, findLinkBySlug, findLinksByUserId, updateLink } = linksModule;
+const { createLink, deleteLink, findLinkById, findLinkBySlug, findLinksByUserId, findRecentLinksByUserId, updateLink } = linksModule;
 const { createUser } = usersModule;
 
 let dbReady = true;
@@ -211,6 +211,38 @@ describe.skipIf(!dbReady)("src/lib/db/links.ts", () => {
     await expect(findLinksByUserId(user.id)).resolves.toMatchObject([
       { id: second.id, slug: second.slug },
       { id: first.id, slug: first.slug },
+    ]);
+  });
+
+  it("returns the most recent links up to the provided limit", async () => {
+    const user = await createUser({
+      email: `story-4-2-recent-${randomUUID()}@linkboard.dev`,
+    });
+    createdUserIds.push(user.id);
+
+    const first = await createLink({
+      slug: `e${randomUUID().replace(/-/g, "").slice(0, 6)}` ,
+      targetUrl: "https://example.com/first",
+      userId: user.id,
+      expiresAt: null,
+    });
+    const second = await createLink({
+      slug: `f${randomUUID().replace(/-/g, "").slice(0, 6)}` ,
+      targetUrl: "https://example.com/second",
+      userId: user.id,
+      expiresAt: null,
+    });
+    const third = await createLink({
+      slug: `g${randomUUID().replace(/-/g, "").slice(0, 6)}` ,
+      targetUrl: "https://example.com/third",
+      userId: user.id,
+      expiresAt: null,
+    });
+    createdLinkIds.push(first.id, second.id, third.id);
+
+    await expect(findRecentLinksByUserId(user.id, 2)).resolves.toMatchObject([
+      { id: third.id, slug: third.slug },
+      { id: second.id, slug: second.slug },
     ]);
   });
 });

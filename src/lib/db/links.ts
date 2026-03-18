@@ -84,6 +84,14 @@ export async function findLinksByUserId(userId: string) {
   });
 }
 
+export async function findRecentLinksByUserId(userId: string, limit = 5) {
+  return prisma.link.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+}
+
 export function buildLinkLibraryWhereClause({
   userId,
   query,
