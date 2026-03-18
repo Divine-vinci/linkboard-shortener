@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 2.9 Create Link with Board Assignment
+- Current story: Story 3.1 Create Boards with Visibility Controls (DONE)
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Completed Story 2.9 dev-story and started Claude ACP code review session agent:claude:acp:0171b5ba-4304-4f7d-bd23-a0167b7e8b8e.
-- Next step: Poll ACP session agent:claude:acp:0171b5ba-4304-4f7d-bd23-a0167b7e8b8e for Story 2.9 code-review completion
+- Last action: Reconciled Story 3.1 code-review results, completed BMAD code-review workflow, reran validation (267 tests pass, lint pass, build still fails on pre-existing `src/lib/logger.ts` Edge runtime issue).
+- Next step: Commit & push Story 3.1, then start story 3.2: Edit and Delete Boards via Phase 4 story loop
 
 ## Latest Completed Session
 - subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
@@ -27,6 +27,10 @@
 - subagent_status: running
 
 ## Current ACP Session
+- acp_session_key: agent:claude:acp:a1a220cd-d862-4d56-b3c9-834893d89640
+- acp_workflow: code-review
+- acp_status: completed
+
 - acp_session_key: agent:claude:acp:f218bbd5-104a-4883-b916-da4b368a0006
 - acp_workflow: code-review
 - acp_status: completed
@@ -82,7 +86,8 @@
 - [x] Story 2.6: Delete Links (commit: 7267370)
 - [x] Story 2.7: Redirect Engine with Redis Caching (commit: 2f5a8d2)
 - [x] Story 2.8: Link Library with Search and Filter (commit: 9c2a541)
-- [ ] Story 2.9: Create Link with Board Assignment
+- [x] Story 2.9: Create Link with Board Assignment (commit: e51e452)
+- [x] Story 3.1: Create Boards with Visibility Controls
 
 ## Completed Workflows
 - [x] project initialization
@@ -137,7 +142,15 @@
 - [x] Story 2.7 loop complete (commit: 2f5a8d2)
 - [x] code-review — Story 2.8 (output: implementation-artifacts/2-8-code-review.md, fallback review after Claude ACP timeout)
 - [x] Story 2.8 loop complete (commit: 9c2a541)
+- [x] create-story — Story 2.9
+- [x] dev-story — Story 2.9 (output: implementation-artifacts/2-9-dev-story-result.md)
+- [x] code-review — Story 2.9
+- [x] Story 2.9 loop complete (commit: e51e452)
+- [x] create-story — Story 3.1
+- [x] dev-story — Story 3.1
+- [x] code-review — Story 3.1
 
 ## Blockers
+- Pre-existing build failure remains: `next build` fails because `src/lib/logger.ts` uses `process.stdout` in Edge runtime contexts; Story 3.1 tests/lint pass and code-review is complete, but this broader issue is still unresolved.
 - Mission Control task mapping is incomplete in progress.md; local repo remains source of truth.
 - Claude ACP code-review sessions produced no transcript output multiple times in the sprint; fallback/local reconciliation was used where needed, including Story 2.8 after timeout/no-output.

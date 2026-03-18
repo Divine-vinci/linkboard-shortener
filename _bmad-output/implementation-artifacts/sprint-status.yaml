@@ -52,7 +52,7 @@ development_status:
   epic-1-retrospective: optional
 
   # Epic 2: Link Management & URL Shortening
-  epic-2: in-progress
+  epic-2: done
   2-1-create-short-links-with-auto-generated-slugs: done
   2-2-custom-slug-support-and-validation: done
   2-3-link-metadata-management: done
@@ -65,8 +65,8 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: Board Organization
-  epic-3: backlog
-  3-1-create-boards-with-visibility-controls: backlog
+  epic-3: in-progress
+  3-1-create-boards-with-visibility-controls: done
   3-2-edit-and-delete-boards: backlog
   3-3-add-and-remove-links-from-boards: backlog
   3-4-reorder-links-within-a-board: backlog

@@ -1,4 +1,4 @@
-import type { Link } from "@prisma/client";
+import type { Board, Link } from "@prisma/client";
 
 import { AppError } from "@/lib/errors";
 
@@ -16,6 +16,26 @@ export function toLinkResponse(
     userId: link.userId,
     createdAt: link.createdAt,
     updatedAt: link.updatedAt,
+  };
+}
+
+export function toBoardResponse(
+  board: Pick<Board, "id" | "name" | "slug" | "description" | "visibility" | "userId" | "createdAt" | "updatedAt"> & {
+    _count?: {
+      boardLinks: number;
+    };
+  },
+) {
+  return {
+    id: board.id,
+    name: board.name,
+    slug: board.slug,
+    description: board.description,
+    visibility: board.visibility,
+    userId: board.userId,
+    createdAt: board.createdAt instanceof Date ? board.createdAt.toISOString() : board.createdAt,
+    updatedAt: board.updatedAt instanceof Date ? board.updatedAt.toISOString() : board.updatedAt,
+    _count: board._count,
   };
 }
 

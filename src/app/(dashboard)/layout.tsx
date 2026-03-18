@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth/config";
 
 const navigationItems = [
   { href: "/dashboard/links", label: "Links" },
+  { href: "/dashboard/boards", label: "Boards" },
   { href: "/dashboard/settings", label: "Settings" },
 ];
 
