@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { BoardVisibility } from "@prisma/client";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { BoardDeleteButton } from "@/components/boards/board-delete-button";
 import { auth } from "@/lib/auth/config";
 import { findBoardById } from "@/lib/db/boards";
 
@@ -38,9 +40,20 @@ export default async function BoardDetailPage({ params }: { params: Promise<{ id
             <h2 className="text-2xl font-semibold tracking-tight text-zinc-100">{board.name}</h2>
             <p className="max-w-2xl text-sm text-zinc-400">{board.description ?? "No description added yet."}</p>
           </div>
-          <span className="inline-flex w-fit items-center rounded-full border border-zinc-700 bg-zinc-800/80 px-3 py-1 text-xs font-medium text-zinc-100">
-            {board.visibility}
-          </span>
+          <div className="flex flex-col items-start gap-3 sm:items-end">
+            <span className="inline-flex w-fit items-center rounded-full border border-zinc-700 bg-zinc-800/80 px-3 py-1 text-xs font-medium text-zinc-100">
+              {board.visibility}
+            </span>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href={`/dashboard/boards/${board.id}/edit`}
+                className="inline-flex items-center justify-center rounded-2xl border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-100 transition hover:border-emerald-400/60 hover:text-emerald-300"
+              >
+                Edit board
+              </Link>
+              <BoardDeleteButton boardId={board.id} />
+            </div>
+          </div>
         </div>
 
         <dl className="mt-6 grid gap-4 text-sm text-zinc-400 sm:grid-cols-3">

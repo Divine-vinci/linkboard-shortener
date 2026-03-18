@@ -13,6 +13,12 @@ type CreateBoardParams = {
   userId: string;
 };
 
+export type UpdateBoardData = {
+  name?: string;
+  description?: string | null;
+  visibility?: Board["visibility"];
+};
+
 type FindBoardsOptions = {
   limit?: number;
   offset?: number;
@@ -94,6 +100,19 @@ export async function findBoardById(id: string, db: DbClient = prisma) {
   });
 }
 
+export async function findBoardSummaryById(id: string, db: DbClient = prisma) {
+  return db.board.findUnique({
+    where: { id },
+    include: {
+      _count: {
+        select: {
+          boardLinks: true,
+        },
+      },
+    },
+  });
+}
+
 export async function findBoardBySlug(slug: string, db: DbClient = prisma) {
   return db.board.findUnique({
     where: { slug },
@@ -126,4 +145,35 @@ export async function createBoard({ name, description, visibility, userId }: Cre
   }
 
   throw new Error("Unable to generate a unique board slug");
+}
+
+export async function updateBoard(id: string, userId: string, data: UpdateBoardData, db: DbClient = prisma) {
+  const board = await db.board.findFirst({ where: { id, userId } });
+
+  if (!board) {
+    return null;
+  }
+
+  return db.board.update({
+    where: { id },
+    data,
+    include: {
+      _count: {
+        select: {
+          boardLinks: true,
+        },
+      },
+    },
+  });
+}
+
+export async function deleteBoard(id: string, userId: string, db: DbClient = prisma): Promise<boolean> {
+  const board = await db.board.findFirst({ where: { id, userId } });
+
+  if (!board) {
+    return false;
+  }
+
+  await db.board.delete({ where: { id } });
+  return true;
 }

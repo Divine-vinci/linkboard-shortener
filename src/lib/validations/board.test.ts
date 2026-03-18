@@ -1,7 +1,7 @@
 import { BoardVisibility } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
-import { boardListQuerySchema, createBoardSchema } from "./board";
+import { boardListQuerySchema, createBoardSchema, updateBoardSchema } from "./board";
 
 describe("src/lib/validations/board.ts", () => {
   it("accepts valid board input and applies the default visibility", () => {
@@ -52,6 +52,40 @@ describe("src/lib/validations/board.ts", () => {
 
   it("rejects descriptions exceeding 500 characters", () => {
     const result = createBoardSchema.safeParse({ name: "OK", description: "D".repeat(501) });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.flatten().fieldErrors.description?.[0]).toContain("at most 500");
+  });
+
+  it("accepts partial board updates", () => {
+    expect(updateBoardSchema.parse({ name: "  Renamed board  " })).toEqual({
+      name: "Renamed board",
+    });
+    expect(updateBoardSchema.parse({ visibility: BoardVisibility.Public })).toEqual({
+      visibility: BoardVisibility.Public,
+    });
+  });
+
+  it("accepts null description to clear an existing description", () => {
+    expect(updateBoardSchema.parse({ description: null })).toEqual({ description: null });
+  });
+
+  it("rejects empty update payloads", () => {
+    const result = updateBoardSchema.safeParse({});
+
+    expect(result.success).toBe(false);
+    expect(result.error?.flatten().formErrors).toContain("At least one field must be provided");
+  });
+
+  it("rejects empty update names", () => {
+    const result = updateBoardSchema.safeParse({ name: "   " });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.flatten().fieldErrors.name).toContain("Board name is required");
+  });
+
+  it("rejects descriptions exceeding 500 characters on update", () => {
+    const result = updateBoardSchema.safeParse({ description: "D".repeat(501) });
 
     expect(result.success).toBe(false);
     expect(result.error?.flatten().fieldErrors.description?.[0]).toContain("at most 500");

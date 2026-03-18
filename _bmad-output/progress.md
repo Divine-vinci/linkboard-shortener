@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 3.1 Create Boards with Visibility Controls (DONE)
+- Current story: Story 3.2 Edit and Delete Boards
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Reconciled Story 3.1 code-review results, completed BMAD code-review workflow, reran validation (267 tests pass, lint pass, build still fails on pre-existing `src/lib/logger.ts` Edge runtime issue).
-- Next step: Commit & push Story 3.1, then start story 3.2: Edit and Delete Boards via Phase 4 story loop
+- Last action: Story 3.2 code-review completed; fixes reconciled locally, tests/lint re-run clean.
+- Next step: Commit & push, then start story 3.3: Add and Remove Links from Boards via Phase 4 story loop
 
 ## Latest Completed Session
 - subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
@@ -87,7 +87,8 @@
 - [x] Story 2.7: Redirect Engine with Redis Caching (commit: 2f5a8d2)
 - [x] Story 2.8: Link Library with Search and Filter (commit: 9c2a541)
 - [x] Story 2.9: Create Link with Board Assignment (commit: e51e452)
-- [x] Story 3.1: Create Boards with Visibility Controls
+- [x] Story 3.1: Create Boards with Visibility Controls (commit: 555a9a3)
+- [x] Story 3.2: Edit and Delete Boards
 
 ## Completed Workflows
 - [x] project initialization
@@ -149,6 +150,9 @@
 - [x] create-story — Story 3.1
 - [x] dev-story — Story 3.1
 - [x] code-review — Story 3.1
+- [x] create-story — Story 3.2
+- [x] dev-story — Story 3.2
+- [x] code-review — Story 3.2
 
 ## Blockers
 - Pre-existing build failure remains: `next build` fails because `src/lib/logger.ts` uses `process.stdout` in Edge runtime contexts; Story 3.1 tests/lint pass and code-review is complete, but this broader issue is still unresolved.
