@@ -97,7 +97,7 @@ development_status:
   # Epic 7: API Access & Developer Experience
   epic-7: in-progress
   7-1-api-key-generation-and-management: done
-  7-2-links-rest-api-endpoints: backlog
+  7-2-links-rest-api-endpoints: done
   7-3-boards-and-board-links-rest-api-endpoints: backlog
   7-4-analytics-rest-api-endpoints: backlog
   7-5-api-rate-limiting: backlog

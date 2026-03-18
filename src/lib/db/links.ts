@@ -21,6 +21,14 @@ type FindLinksForLibraryParams = {
   limit?: number;
 };
 
+export type FindLinksWithOffsetParams = {
+  userId: string;
+  query?: string;
+  sortBy?: "createdAt" | "updatedAt";
+  limit?: number;
+  offset?: number;
+};
+
 export type LinkLibraryResult = {
   links: Link[];
   total: number;
@@ -125,6 +133,28 @@ export async function getDistinctTagsForUser(userId: string): Promise<string[]> 
   return Array.from(new Set(links.flatMap((link) => link.tags))).sort((left, right) =>
     left.localeCompare(right),
   );
+}
+
+export async function findLinksWithOffset({
+  userId,
+  query,
+  sortBy = "createdAt",
+  limit = 20,
+  offset = 0,
+}: FindLinksWithOffsetParams): Promise<LinkLibraryResult> {
+  const where = buildLinkLibraryWhereClause({ userId, query });
+
+  const [links, total] = await Promise.all([
+    prisma.link.findMany({
+      where,
+      orderBy: { [sortBy]: "desc" },
+      skip: offset,
+      take: limit,
+    }),
+    prisma.link.count({ where }),
+  ]);
+
+  return { links, total };
 }
 
 export async function findLinksForLibrary({

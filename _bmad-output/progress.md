@@ -6,21 +6,27 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 7.1 API Key Generation and Management (CODE-REVIEW RUNNING)
+- Current story: Story 7.2 Links REST API Endpoints (DONE)
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: 2026-03-18 21:00 UTC recovered stalled Story 7.1 loop after the dev subagent completed; started `code-review` via ACP session `agent:claude:acp:6d29e8f9-95de-40c7-8d23-05fac3c78309`.
-- Next step: Poll ACP session `agent:claude:acp:6d29e8f9-95de-40c7-8d23-05fac3c78309` for Story 7.1 code-review completion
+- Last action: 2026-03-18 23:02 UTC heartbeat recovered Story 7.2 code-review, validated 450 passing / 9 skipped tests plus lint, and finalized the workflow.
+- Next step: Commit & push Story 7.2, then start workflow: create-story for Story 7.3 Boards and Board Links REST API Endpoints
 
-## Active Dev Session
+## Previous Dev Session
 - subagent_session_key: agent:main:subagent:bc43afb9-217b-46d6-9e25-6936a3865451
 - subagent_workflow: dev-story
 - subagent_status: completed
 - subagent_started_at: 2026-03-18T20:30:00Z
 
-## ACP Session
+## Previous ACP Session
 - acp_session_key: agent:claude:acp:6d29e8f9-95de-40c7-8d23-05fac3c78309
 - acp_started_at: 2026-03-18T21:00:00Z
 - acp_workflow: code-review
+- acp_status: completed
+
+## ACP Session
+- acp_session_key: agent:claude:acp:229e27a9-45cf-4786-b22c-25c9f86026f6
+- acp_started_at: 2026-03-18T21:35:00Z
+- acp_workflow: create-story
 - acp_status: running
 
 ## Previous ACP Session
@@ -81,8 +87,8 @@
 - [x] Story 6.2: Link Analytics Dashboard Clicks and Trends (commit: 279e018)
 - [x] Story 6.3: Referrer and Geographic Analytics (commit: 217fbbe)
 - [x] Story 6.4: Board-Level Aggregate Analytics
-- [ ] Story 7.1: API Key Generation and Management
-- [ ] Story 7.2: Links REST API Endpoints
+- [x] Story 7.1: API Key Generation and Management (commit: 0d14e01)
+- [x] Story 7.2: Links REST API Endpoints (commit: pending)
 - [ ] Story 7.3: Boards and Board Links REST API Endpoints
 - [ ] Story 7.4: Analytics REST API Endpoints
 - [ ] Story 7.5: API Rate Limiting
@@ -98,6 +104,13 @@
 - [x] sprint-planning
 - [x] Story 6.1 create-story/dev-story/code-review loop complete (commit: 5af97ae, follow-up fixes pending commit)
 - [x] Story 6.4 create-story/dev-story/code-review loop complete (commit: pending)
+
+- [x] create-story — Story 7.1
+- [x] dev-story — Story 7.1
+- [x] code-review — Story 7.1 (commit: 0d14e01)
+- [x] create-story — Story 7.2
+- [x] dev-story — Story 7.2
+- [x] code-review — Story 7.2
 
 ## Blockers
 - BMAD session state drift between Story 6.1 and Story 6.2; stale ACP and `_bmad/state.json` entries need clean handoff on next workflow start.

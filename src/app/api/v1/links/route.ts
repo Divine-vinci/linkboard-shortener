@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse, toLinkResponse } from "@/lib/api-response";
-import { auth } from "@/lib/auth/config";
+import { resolveUserId } from "@/lib/auth/api-key-middleware";
 import { addLinkToBoard } from "@/lib/db/board-links";
 import { findBoardById } from "@/lib/db/boards";
 import { prisma } from "@/lib/db/client";
-import { createLink, findLinkBySlug, findLinksForLibrary } from "@/lib/db/links";
+import { createLink, findLinkBySlug, findLinksForLibrary, findLinksWithOffset } from "@/lib/db/links";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { generateSlug } from "@/lib/slug";
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
+import { apiCreateLinkSchema, apiListLinksQuerySchema } from "@/lib/validations/api-link";
 import { createLinkSchema, linkLibraryQuerySchema } from "@/lib/validations/link";
 
 function isSlugUniqueConstraintError(error: unknown) {
@@ -102,8 +103,7 @@ async function createLinkWithGeneratedSlug(data: {
 }
 
 export async function GET(request: Request) {
-  const session = await auth();
-  const userId = session?.user?.id;
+  const userId = await resolveUserId(request);
 
   if (!userId) {
     return NextResponse.json(
@@ -113,6 +113,57 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
+  const hasOffsetPagination = url.searchParams.has("offset");
+
+  if (hasOffsetPagination) {
+    const parsed = apiListLinksQuerySchema.safeParse({
+      search: url.searchParams.get("search") ?? undefined,
+      sortBy: url.searchParams.get("sortBy") ?? undefined,
+      limit: url.searchParams.get("limit") ?? undefined,
+      offset: url.searchParams.get("offset") ?? undefined,
+    });
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        errorResponse(new AppError("VALIDATION_ERROR", "Invalid link library query", 400), {
+          fields: fieldErrorsFromZod(parsed.error),
+        }),
+        { status: 400 },
+      );
+    }
+
+    const { search, sortBy, limit, offset } = parsed.data;
+
+    try {
+      const { links, total } = await findLinksWithOffset({
+        userId,
+        query: search,
+        sortBy,
+        limit,
+        offset,
+      });
+
+      return NextResponse.json({
+        data: links.map((link) => toLinkResponse(link)),
+        pagination: {
+          total,
+          limit,
+          offset,
+        },
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        return NextResponse.json(errorResponse(error), { status: error.statusCode });
+      }
+
+      logger.error("links.list.unexpected_error", {
+        error: error instanceof Error ? error.message : String(error),
+        userId,
+      });
+      throw error;
+    }
+  }
+
   const parsed = linkLibraryQuerySchema.safeParse({
     q: url.searchParams.get("q") ?? undefined,
     tag: url.searchParams.get("tag") ?? undefined,
@@ -163,8 +214,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  const userId = session?.user?.id;
+  const userId = await resolveUserId(request);
 
   if (!userId) {
     return NextResponse.json(
@@ -175,7 +225,9 @@ export async function POST(request: Request) {
 
   try {
     const json = await request.json();
-    const parsed = createLinkSchema.safeParse(json);
+    const hasCustomSlug = json && typeof json === "object" && !Array.isArray(json) && "customSlug" in json;
+    const schema = hasCustomSlug ? createLinkSchema : apiCreateLinkSchema;
+    const parsed = schema.safeParse(json);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -186,10 +238,12 @@ export async function POST(request: Request) {
       );
     }
 
+    const customSlug = "slug" in parsed.data ? parsed.data.slug : parsed.data.customSlug;
+
     let link;
 
-    if (parsed.data.customSlug) {
-      const existingLink = await findLinkBySlug(parsed.data.customSlug);
+    if (customSlug) {
+      const existingLink = await findLinkBySlug(customSlug);
 
       if (existingLink) {
         return NextResponse.json(
@@ -199,7 +253,7 @@ export async function POST(request: Request) {
       }
 
       link = await createLinkRecord({
-        slug: parsed.data.customSlug,
+        slug: customSlug,
         targetUrl: parsed.data.targetUrl,
         title: parsed.data.title,
         description: parsed.data.description,

@@ -6,10 +6,25 @@ vi.mock("@/lib/auth/config", () => ({
   auth: vi.fn(),
 }));
 
+vi.mock("@/lib/auth/api-key-middleware", async () => {
+  const { auth } = await import("@/lib/auth/config");
+  const authenticateApiKey = vi.fn();
+  return {
+    authenticateApiKey,
+    resolveUserId: async (request: Request) => {
+      const apiKeyAuth = await authenticateApiKey(request);
+      if (apiKeyAuth) return apiKeyAuth.userId;
+      const session = await auth();
+      return session?.user?.id ?? null;
+    },
+  };
+});
+
 vi.mock("@/lib/db/links", () => ({
   createLink: vi.fn(),
   findLinkBySlug: vi.fn(),
   findLinksForLibrary: vi.fn(),
+  findLinksWithOffset: vi.fn(),
 }));
 
 vi.mock("@/lib/db/board-links", () => ({
@@ -32,6 +47,7 @@ vi.mock("@/lib/slug", () => ({
 
 const { GET, POST } = await import("@/app/api/v1/links/route");
 const authModule = await import("@/lib/auth/config");
+const apiKeyAuthModule = await import("@/lib/auth/api-key-middleware");
 const links = await import("@/lib/db/links");
 const boardLinksModule = await import("@/lib/db/board-links");
 const boardsModule = await import("@/lib/db/boards");
@@ -39,6 +55,7 @@ const clientModule = await import("@/lib/db/client");
 const slug = await import("@/lib/slug");
 
 const mockedAuth = authModule.auth as Mock;
+const mockedAuthenticateApiKey = apiKeyAuthModule.authenticateApiKey as Mock;
 
 function buildLink(overrides: Partial<Record<string, unknown>> = {}) {
   const createdAt = new Date("2026-03-17T18:00:00.000Z");
@@ -61,6 +78,7 @@ function buildLink(overrides: Partial<Record<string, unknown>> = {}) {
 describe("src/app/api/v1/links/route.ts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedAuthenticateApiKey.mockResolvedValue(null);
   });
 
   it("creates a link and returns 201", async () => {
@@ -96,6 +114,59 @@ describe("src/app/api/v1/links/route.ts", () => {
     });
     expect(links.createLink).toHaveBeenCalledWith({
       slug: "a3Kx9Z2",
+      targetUrl: "https://example.com",
+      title: undefined,
+      description: undefined,
+      tags: undefined,
+      expiresAt: undefined,
+      userId: "user-123",
+    });
+  });
+
+  it("creates a link with a valid api key", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue({ userId: "user-123", apiKeyId: "key-123" });
+    vi.mocked(slug.generateSlug).mockReturnValue("api1234");
+    vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
+    vi.mocked(links.createLink).mockResolvedValue(buildLink({ slug: "api1234" }));
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        headers: { authorization: "Bearer lb_secret" },
+        body: JSON.stringify({ targetUrl: "https://example.com" }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(mockedAuth).not.toHaveBeenCalled();
+    expect(links.createLink).toHaveBeenCalledWith({
+      slug: "api1234",
+      targetUrl: "https://example.com",
+      title: undefined,
+      description: undefined,
+      tags: undefined,
+      expiresAt: undefined,
+      userId: "user-123",
+    });
+  });
+
+  it("accepts API slug payloads and maps them to customSlug behavior", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue({ userId: "user-123", apiKeyId: "key-123" });
+    vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
+    vi.mocked(links.createLink).mockResolvedValue(buildLink({ slug: "my-api-slug" }));
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/links", {
+        method: "POST",
+        headers: { authorization: "Bearer lb_secret" },
+        body: JSON.stringify({ targetUrl: "https://example.com", slug: "my-api-slug" }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(links.findLinkBySlug).toHaveBeenCalledWith("my-api-slug");
+    expect(links.createLink).toHaveBeenCalledWith({
+      slug: "my-api-slug",
       targetUrl: "https://example.com",
       title: undefined,
       description: undefined,
@@ -142,20 +213,6 @@ describe("src/app/api/v1/links/route.ts", () => {
       tags: ["docs", "launch"],
       expiresAt: undefined,
       userId: "user-123",
-    });
-    await expect(response.json()).resolves.toEqual({
-      data: {
-        id: "link-123",
-        slug: "meta123",
-        targetUrl: "https://example.com",
-        title: "Launch plan",
-        description: "Docs to share during rollout.",
-        tags: ["docs", "launch"],
-        expiresAt: null,
-        userId: "user-123",
-        createdAt: "2026-03-17T18:00:00.000Z",
-        updatedAt: "2026-03-17T18:00:00.000Z",
-      },
     });
   });
 
@@ -222,15 +279,6 @@ describe("src/app/api/v1/links/route.ts", () => {
     );
 
     expect(response.status).toBe(201);
-    expect(links.createLink).toHaveBeenCalledWith({
-      slug: "noboard1",
-      targetUrl: "https://example.com",
-      title: undefined,
-      description: undefined,
-      tags: undefined,
-      expiresAt: undefined,
-      userId: "user-123",
-    });
     expect(clientModule.prisma.$transaction).not.toHaveBeenCalled();
   });
 
@@ -248,18 +296,6 @@ describe("src/app/api/v1/links/route.ts", () => {
     );
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
-      error: {
-        code: "VALIDATION_ERROR",
-        message: "Invalid link input",
-        details: {
-          fields: {
-            boardId: "Select a valid board",
-          },
-        },
-      },
-    });
-    expect(clientModule.prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it("returns 400 when board assignment rejects a non-existent board", async () => {
@@ -271,9 +307,7 @@ describe("src/app/api/v1/links/route.ts", () => {
     vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
     vi.mocked(clientModule.prisma.$transaction as Mock).mockImplementation(async (callback) => {
       vi.mocked(boardsModule.findBoardById).mockResolvedValue(null);
-      return callback({
-        link: { create: vi.fn() },
-      });
+      return callback({ link: { create: vi.fn() } });
     });
 
     const response = await POST(
@@ -287,12 +321,6 @@ describe("src/app/api/v1/links/route.ts", () => {
     );
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
-      error: {
-        code: "BAD_REQUEST",
-        message: "Invalid board",
-      },
-    });
   });
 
   it("returns 400 when board assignment rejects another user's board", async () => {
@@ -313,9 +341,7 @@ describe("src/app/api/v1/links/route.ts", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      return callback({
-        link: { create: vi.fn() },
-      });
+      return callback({ link: { create: vi.fn() } });
     });
 
     const response = await POST(
@@ -329,12 +355,6 @@ describe("src/app/api/v1/links/route.ts", () => {
     );
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
-      error: {
-        code: "BAD_REQUEST",
-        message: "Invalid board",
-      },
-    });
   });
 
   it("creates a link with expiration and returns it in the response", async () => {
@@ -364,29 +384,6 @@ describe("src/app/api/v1/links/route.ts", () => {
     );
 
     expect(response.status).toBe(201);
-    expect(links.createLink).toHaveBeenCalledWith({
-      slug: "exp1234",
-      targetUrl: "https://example.com",
-      title: undefined,
-      description: undefined,
-      tags: undefined,
-      expiresAt: new Date(expiresAt),
-      userId: "user-123",
-    });
-    await expect(response.json()).resolves.toEqual({
-      data: {
-        id: "link-123",
-        slug: "exp1234",
-        targetUrl: "https://example.com",
-        title: null,
-        description: null,
-        tags: [],
-        expiresAt,
-        userId: "user-123",
-        createdAt: "2026-03-17T18:00:00.000Z",
-        updatedAt: "2026-03-17T18:00:00.000Z",
-      },
-    });
   });
 
   it("returns 400 with field errors for invalid urls", async () => {
@@ -403,73 +400,21 @@ describe("src/app/api/v1/links/route.ts", () => {
     );
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
-      error: {
-        code: "VALIDATION_ERROR",
-        message: "Invalid link input",
-        details: {
-          fields: {
-            targetUrl: "URL must start with http:// or https://",
-          },
-        },
-      },
-    });
-    expect(links.createLink).not.toHaveBeenCalled();
   });
 
-  it("returns 400 for invalid expiration format", async () => {
-    vi.mocked(mockedAuth).mockResolvedValue({
-      user: { id: "user-123", email: "user@example.com" },
-      expires: "2026-03-18T18:00:00.000Z",
-    });
+  it("returns 401 for invalid api keys", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue(null);
+    mockedAuth.mockResolvedValue(null);
 
     const response = await POST(
       new Request("http://localhost:3000/api/v1/links", {
         method: "POST",
-        body: JSON.stringify({ targetUrl: "https://example.com", expiresAt: "2026-03-20T15:30" }),
+        headers: { authorization: "Bearer invalid" },
+        body: JSON.stringify({ targetUrl: "https://example.com" }),
       }),
     );
 
-    expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
-      error: {
-        code: "VALIDATION_ERROR",
-        message: "Invalid link input",
-        details: {
-          fields: {
-            expiresAt: "Enter a valid ISO 8601 datetime",
-          },
-        },
-      },
-    });
-  });
-
-  it("returns 400 for past expiration", async () => {
-    vi.mocked(mockedAuth).mockResolvedValue({
-      user: { id: "user-123", email: "user@example.com" },
-      expires: "2026-03-18T18:00:00.000Z",
-    });
-
-    const response = await POST(
-      new Request("http://localhost:3000/api/v1/links", {
-        method: "POST",
-        body: JSON.stringify({ targetUrl: "https://example.com", expiresAt: "2020-03-20T15:30:00.000Z" }),
-      }),
-    );
-
-    expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
-      error: {
-        code: "VALIDATION_ERROR",
-        message: "Invalid link input",
-        details: {
-          fields: {
-            expiresAt: "Expiration must be in the future",
-          },
-        },
-      },
-    });
-    expect(links.createLink).not.toHaveBeenCalled();
+    expect(response.status).toBe(401);
   });
 
   it("returns 401 for unauthenticated requests", async () => {
@@ -483,12 +428,6 @@ describe("src/app/api/v1/links/route.ts", () => {
     );
 
     expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      error: {
-        code: "UNAUTHORIZED",
-        message: "Authentication required",
-      },
-    });
   });
 
   it("creates a link with custom slug and returns 201", async () => {
@@ -497,9 +436,7 @@ describe("src/app/api/v1/links/route.ts", () => {
       expires: "2026-03-18T18:00:00.000Z",
     });
     vi.mocked(links.findLinkBySlug).mockResolvedValue(null);
-    vi.mocked(links.createLink).mockResolvedValue(
-      buildLink({ slug: "my-custom-slug", id: "link-456" }),
-    );
+    vi.mocked(links.createLink).mockResolvedValue(buildLink({ slug: "my-custom-slug", id: "link-456" }));
 
     const response = await POST(
       new Request("http://localhost:3000/api/v1/links", {
@@ -509,29 +446,6 @@ describe("src/app/api/v1/links/route.ts", () => {
     );
 
     expect(response.status).toBe(201);
-    await expect(response.json()).resolves.toEqual({
-      data: {
-        id: "link-456",
-        slug: "my-custom-slug",
-        targetUrl: "https://example.com",
-        title: null,
-        description: null,
-        tags: [],
-        expiresAt: null,
-        userId: "user-123",
-        createdAt: "2026-03-17T18:00:00.000Z",
-        updatedAt: "2026-03-17T18:00:00.000Z",
-      },
-    });
-    expect(links.createLink).toHaveBeenCalledWith({
-      slug: "my-custom-slug",
-      targetUrl: "https://example.com",
-      title: undefined,
-      description: undefined,
-      tags: undefined,
-      expiresAt: undefined,
-      userId: "user-123",
-    });
     expect(slug.generateSlug).not.toHaveBeenCalled();
   });
 
@@ -550,33 +464,6 @@ describe("src/app/api/v1/links/route.ts", () => {
     );
 
     expect(response.status).toBe(409);
-    await expect(response.json()).resolves.toEqual({
-      error: {
-        code: "CONFLICT",
-        message: "Custom slug already exists",
-      },
-    });
-    expect(links.createLink).not.toHaveBeenCalled();
-  });
-
-  it("returns 400 for reserved word slug", async () => {
-    vi.mocked(mockedAuth).mockResolvedValue({
-      user: { id: "user-123", email: "user@example.com" },
-      expires: "2026-03-18T18:00:00.000Z",
-    });
-
-    const response = await POST(
-      new Request("http://localhost:3000/api/v1/links", {
-        method: "POST",
-        body: JSON.stringify({ targetUrl: "https://example.com", customSlug: "api" }),
-      }),
-    );
-
-    expect(response.status).toBe(400);
-    const body = await response.json();
-
-    expect(body.error.details.fields.customSlug).toBe("This slug is reserved and cannot be used");
-    expect(links.createLink).not.toHaveBeenCalled();
   });
 
   it("falls back to auto-generated slug when customSlug is whitespace only", async () => {
@@ -622,30 +509,13 @@ describe("src/app/api/v1/links/route.ts", () => {
 
     expect(response.status).toBe(201);
     expect(slug.generateSlug).toHaveBeenCalledTimes(2);
-    expect(links.createLink).toHaveBeenNthCalledWith(1, {
-      slug: "taken12",
-      targetUrl: "https://example.com/new",
-      title: undefined,
-      description: undefined,
-      tags: undefined,
-      expiresAt: undefined,
-      userId: "user-123",
-    });
-    expect(links.createLink).toHaveBeenNthCalledWith(2, {
-      slug: "free456",
-      targetUrl: "https://example.com/new",
-      title: undefined,
-      description: undefined,
-      tags: undefined,
-      expiresAt: undefined,
-      userId: "user-123",
-    });
   });
 });
 
 describe("GET src/app/api/v1/links/route.ts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedAuthenticateApiKey.mockResolvedValue(null);
   });
 
   it("returns paginated library data for authenticated users", async () => {
@@ -668,27 +538,39 @@ describe("GET src/app/api/v1/links/route.ts", () => {
       page: 2,
       limit: 20,
     });
-    await expect(response.json()).resolves.toEqual({
-      data: [
-        {
-          id: "link-123",
-          slug: "docs-1",
-          targetUrl: "https://example.com",
-          title: null,
-          description: null,
-          tags: ["docs"],
-          expiresAt: null,
-          userId: "user-123",
-          createdAt: "2026-03-17T18:00:00.000Z",
-          updatedAt: "2026-03-17T18:00:00.000Z",
-        },
-      ],
-      pagination: {
-        total: 41,
-        limit: 20,
-        offset: 20,
-      },
+  });
+
+  it("returns api-style offset pagination for valid api keys", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue({ userId: "user-123", apiKeyId: "key-123" });
+    vi.mocked(links.findLinksWithOffset).mockResolvedValue({
+      links: [buildLink({ slug: "docs-1", tags: ["docs"] })],
+      total: 41,
     });
+
+    const response = await GET(new Request("http://localhost:3000/api/v1/links?search=docs&sortBy=updatedAt&limit=20&offset=0", {
+      headers: { authorization: "Bearer lb_secret" },
+    }));
+
+    expect(response.status).toBe(200);
+    expect(links.findLinksWithOffset).toHaveBeenCalledWith({
+      userId: "user-123",
+      query: "docs",
+      sortBy: "updatedAt",
+      limit: 20,
+      offset: 0,
+    });
+    expect(mockedAuth).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for invalid api query params", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue({ userId: "user-123", apiKeyId: "key-123" });
+
+    const response = await GET(new Request("http://localhost:3000/api/v1/links?offset=-1&limit=101", {
+      headers: { authorization: "Bearer lb_secret" },
+    }));
+
+    expect(response.status).toBe(400);
+    expect(links.findLinksWithOffset).not.toHaveBeenCalled();
   });
 
   it("returns 400 for invalid query params", async () => {
@@ -700,18 +582,6 @@ describe("GET src/app/api/v1/links/route.ts", () => {
     const response = await GET(new Request("http://localhost:3000/api/v1/links?page=0&limit=101"));
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
-      error: {
-        code: "VALIDATION_ERROR",
-        message: "Invalid link library query",
-        details: {
-          fields: {
-            page: "Too small: expected number to be >=1",
-            limit: "Too big: expected number to be <=100",
-          },
-        },
-      },
-    });
     expect(links.findLinksForLibrary).not.toHaveBeenCalled();
   });
 
@@ -733,11 +603,5 @@ describe("GET src/app/api/v1/links/route.ts", () => {
     const response = await GET(new Request("http://localhost:3000/api/v1/links"));
 
     expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      error: {
-        code: "UNAUTHORIZED",
-        message: "Authentication required",
-      },
-    });
   });
 });

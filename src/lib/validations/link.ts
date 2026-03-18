@@ -22,7 +22,7 @@ const MAX_TAG_COUNT = 8;
 const MAX_LIBRARY_QUERY_LENGTH = 200;
 const EXPIRATION_MIN_FUTURE_MS = 60_000;
 
-const httpUrlSchema = z
+export const httpUrlSchema = z
   .string({ error: "Target URL is required" })
   .trim()
   .min(1, "Target URL is required")
@@ -51,7 +51,7 @@ export const customSlugSchema = z
     "This slug is reserved and cannot be used",
   );
 
-function emptyStringToUndefined(value: unknown) {
+export function emptyStringToUndefined(value: unknown) {
   if (typeof value === "string" && value.trim() === "") {
     return undefined;
   }
