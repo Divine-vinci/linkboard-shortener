@@ -2,9 +2,16 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { ClicksTimeseriesChart } from "@/components/analytics/clicks-timeseries-chart";
+import { GeoChart } from "@/components/analytics/geo-chart";
 import { LinkAnalyticsHeader } from "@/components/analytics/link-analytics-header";
+import { ReferrerChart } from "@/components/analytics/referrer-chart";
 import { auth } from "@/lib/auth/config";
-import { getLinkAnalyticsOverview, getLinkClicksTimeseries } from "@/lib/db/analytics";
+import {
+  getLinkAnalyticsOverview,
+  getLinkClicksTimeseries,
+  getLinkGeoBreakdown,
+  getLinkReferrerBreakdown,
+} from "@/lib/db/analytics";
 
 export const metadata: Metadata = {
   title: "Link analytics — Linkboard",
@@ -25,10 +32,12 @@ export default async function LinkAnalyticsPage({ params }: { params: Promise<{ 
     notFound();
   }
 
-  const [daily, weekly, monthly] = await Promise.all([
+  const [daily, weekly, monthly, referrers, geo] = await Promise.all([
     getLinkClicksTimeseries(userId, id, "daily"),
     getLinkClicksTimeseries(userId, id, "weekly"),
     getLinkClicksTimeseries(userId, id, "monthly"),
+    getLinkReferrerBreakdown(userId, id),
+    getLinkGeoBreakdown(userId, id),
   ]);
 
   return (
@@ -45,6 +54,10 @@ export default async function LinkAnalyticsPage({ params }: { params: Promise<{ 
           monthly,
         }}
       />
+      <div className="grid gap-6 xl:grid-cols-2">
+        <ReferrerChart data={referrers} />
+        <GeoChart data={geo} />
+      </div>
     </section>
   );
 }

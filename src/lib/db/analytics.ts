@@ -17,8 +17,28 @@ export type LinkClicksTimeseriesPoint = {
   clicks: number;
 };
 
+export type ReferrerBreakdownItem = {
+  domain: string;
+  clicks: number;
+};
+
+export type GeoBreakdownItem = {
+  country: string;
+  clicks: number;
+};
+
 type TimeseriesRow = {
   period: Date | string;
+  clicks: number;
+};
+
+type ReferrerBreakdownRow = {
+  domain: string;
+  clicks: number;
+};
+
+type GeoBreakdownRow = {
+  country: string;
   clicks: number;
 };
 
@@ -110,4 +130,56 @@ export async function getLinkClicksTimeseries(
       clicks: row.clicks,
     };
   });
+}
+
+export async function getLinkReferrerBreakdown(userId: string, linkId: string): Promise<ReferrerBreakdownItem[]> {
+  const rows = await prisma.$queryRaw<ReferrerBreakdownRow[]>(Prisma.sql`
+    SELECT
+      CASE
+        WHEN ce.referrer IS NULL OR btrim(ce.referrer) = '' THEN 'Direct / Unknown'
+        ELSE split_part(
+          regexp_replace(ce.referrer, '^[a-zA-Z][a-zA-Z0-9+.-]*://(www\\.)?', ''),
+          '/',
+          1
+        )
+      END AS domain,
+      COUNT(*)::int AS clicks
+    FROM public.click_events ce
+    INNER JOIN public.links l ON l.id = ce.link_id
+    WHERE ce.link_id = CAST(${linkId} AS uuid)
+      AND l.user_id = CAST(${userId} AS uuid)
+    GROUP BY domain
+    ORDER BY clicks DESC, domain ASC
+    LIMIT 10
+  `);
+
+  return rows.map((row) => ({
+    domain: row.domain,
+    clicks: row.clicks,
+  }));
+}
+
+export async function getLinkGeoBreakdown(userId: string, linkId: string): Promise<GeoBreakdownItem[]> {
+  const rows = await prisma.$queryRaw<GeoBreakdownRow[]>(Prisma.sql`
+    SELECT country, clicks
+    FROM (
+      SELECT
+        CASE
+          WHEN ce.country IS NULL OR btrim(ce.country) = '' THEN 'Unknown'
+          ELSE upper(ce.country)
+        END AS country,
+        COUNT(*)::int AS clicks
+      FROM public.click_events ce
+      INNER JOIN public.links l ON l.id = ce.link_id
+      WHERE ce.link_id = CAST(${linkId} AS uuid)
+        AND l.user_id = CAST(${userId} AS uuid)
+      GROUP BY 1
+    ) grouped
+    ORDER BY clicks DESC, (CASE WHEN country = 'Unknown' THEN 1 ELSE 0 END) ASC, country ASC
+  `);
+
+  return rows.map((row) => ({
+    country: row.country,
+    clicks: row.clicks,
+  }));
 }

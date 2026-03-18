@@ -16,7 +16,12 @@ vi.mock("@/lib/db/client", () => ({
   },
 }));
 
-const { getLinkAnalyticsOverview, getLinkClicksTimeseries } = await import("./analytics");
+const {
+  getLinkAnalyticsOverview,
+  getLinkClicksTimeseries,
+  getLinkGeoBreakdown,
+  getLinkReferrerBreakdown,
+} = await import("./analytics");
 
 describe("src/lib/db/analytics.ts", () => {
   beforeEach(() => {
@@ -76,6 +81,8 @@ describe("src/lib/db/analytics.ts", () => {
 
     await expect(getLinkAnalyticsOverview("user-123", "link-123")).resolves.toMatchObject({ totalClicks: 0 });
     await expect(getLinkClicksTimeseries("user-123", "link-123", "daily")).resolves.toEqual([]);
+    await expect(getLinkReferrerBreakdown("user-123", "link-123")).resolves.toEqual([]);
+    await expect(getLinkGeoBreakdown("user-123", "link-123")).resolves.toEqual([]);
   });
 
   it("returns ascending daily buckets", async () => {
@@ -117,5 +124,45 @@ describe("src/lib/db/analytics.ts", () => {
         clicks: 14,
       },
     ]);
+  });
+
+  it("returns top referrer domains with ownership-scoped aggregation", async () => {
+    queryRawMock.mockResolvedValue([
+      { domain: "twitter.com", clicks: 8 },
+      { domain: "Direct / Unknown", clicks: 3 },
+    ]);
+
+    await expect(getLinkReferrerBreakdown("user-123", "link-123")).resolves.toEqual([
+      { domain: "twitter.com", clicks: 8 },
+      { domain: "Direct / Unknown", clicks: 3 },
+    ]);
+
+    const statement = queryRawMock.mock.calls[0]?.[0];
+    const sqlText = Array.isArray(statement?.strings) ? statement.strings.join(" ") : "";
+
+    expect(sqlText).toContain("regexp_replace(ce.referrer,");
+    expect(sqlText).toContain("INNER JOIN public.links l ON l.id = ce.link_id");
+    expect(sqlText).toContain("l.user_id = CAST(");
+    expect(sqlText).toContain("LIMIT 10");
+  });
+
+  it("returns geographic breakdown with null countries grouped as Unknown", async () => {
+    queryRawMock.mockResolvedValue([
+      { country: "US", clicks: 6 },
+      { country: "Unknown", clicks: 2 },
+    ]);
+
+    await expect(getLinkGeoBreakdown("user-123", "link-123")).resolves.toEqual([
+      { country: "US", clicks: 6 },
+      { country: "Unknown", clicks: 2 },
+    ]);
+
+    const statement = queryRawMock.mock.calls[0]?.[0];
+    const sqlText = Array.isArray(statement?.strings) ? statement.strings.join(" ") : "";
+
+    expect(sqlText).toContain("ce.country IS NULL");
+    expect(sqlText).toContain("upper(ce.country)");
+    expect(sqlText).toContain("INNER JOIN public.links l ON l.id = ce.link_id");
+    expect(sqlText).toContain("l.user_id = CAST(");
   });
 });

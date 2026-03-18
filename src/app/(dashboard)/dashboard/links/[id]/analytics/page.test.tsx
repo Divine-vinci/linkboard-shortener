@@ -1,10 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { authMock, overviewMock, timeseriesMock, notFoundMock } = vi.hoisted(() => ({
+const { authMock, overviewMock, timeseriesMock, referrerMock, geoMock, notFoundMock } = vi.hoisted(() => ({
   authMock: vi.fn(),
   overviewMock: vi.fn(),
   timeseriesMock: vi.fn(),
+  referrerMock: vi.fn(),
+  geoMock: vi.fn(),
   notFoundMock: vi.fn(() => {
     throw new Error("NOT_FOUND");
   }),
@@ -17,6 +19,8 @@ vi.mock("@/lib/auth/config", () => ({
 vi.mock("@/lib/db/analytics", () => ({
   getLinkAnalyticsOverview: overviewMock,
   getLinkClicksTimeseries: timeseriesMock,
+  getLinkReferrerBreakdown: referrerMock,
+  getLinkGeoBreakdown: geoMock,
 }));
 
 vi.mock("@/components/analytics/clicks-timeseries-chart", () => ({
@@ -31,6 +35,18 @@ vi.mock("@/components/analytics/clicks-timeseries-chart", () => ({
   },
 }));
 
+vi.mock("@/components/analytics/referrer-chart", () => ({
+  ReferrerChart: ({ data }: { data: Array<{ domain: string; clicks: number }> }) => (
+    <div data-testid="referrer-chart">{data.length === 0 ? "No referrer data yet" : data[0]?.domain}</div>
+  ),
+}));
+
+vi.mock("@/components/analytics/geo-chart", () => ({
+  GeoChart: ({ data }: { data: Array<{ country: string; clicks: number }> }) => (
+    <div data-testid="geo-chart">{data.length === 0 ? "No geographic data yet" : data[0]?.country}</div>
+  ),
+}));
+
 vi.mock("next/navigation", () => ({
   notFound: notFoundMock,
 }));
@@ -42,7 +58,7 @@ describe("src/app/(dashboard)/dashboard/links/[id]/analytics/page.tsx", () => {
     vi.clearAllMocks();
   });
 
-  it("renders owned analytics with all aggregation datasets loaded server-side", async () => {
+  it("renders owned analytics with all server-side datasets loaded", async () => {
     authMock.mockResolvedValue({ user: { id: "user-123" } });
     overviewMock.mockResolvedValue({
       id: "link-123",
@@ -54,6 +70,8 @@ describe("src/app/(dashboard)/dashboard/links/[id]/analytics/page.tsx", () => {
       .mockResolvedValueOnce([{ label: "2026-03-16", periodStart: "2026-03-16T00:00:00.000Z", clicks: 2 }])
       .mockResolvedValueOnce([{ label: "2026-W12", periodStart: "2026-03-16T00:00:00.000Z", clicks: 7 }])
       .mockResolvedValueOnce([{ label: "2026-03", periodStart: "2026-03-01T00:00:00.000Z", clicks: 7 }]);
+    referrerMock.mockResolvedValue([{ domain: "twitter.com", clicks: 5 }]);
+    geoMock.mockResolvedValue([{ country: "US", clicks: 4 }]);
 
     render(await LinkAnalyticsPage({ params: Promise.resolve({ id: "link-123" }) }));
 
@@ -61,12 +79,15 @@ describe("src/app/(dashboard)/dashboard/links/[id]/analytics/page.tsx", () => {
     expect(timeseriesMock).toHaveBeenNthCalledWith(1, "user-123", "link-123", "daily");
     expect(timeseriesMock).toHaveBeenNthCalledWith(2, "user-123", "link-123", "weekly");
     expect(timeseriesMock).toHaveBeenNthCalledWith(3, "user-123", "link-123", "monthly");
+    expect(referrerMock).toHaveBeenCalledWith("user-123", "link-123");
+    expect(geoMock).toHaveBeenCalledWith("user-123", "link-123");
     expect(screen.getByRole("heading", { name: "Link analytics" })).toBeInTheDocument();
     expect(screen.getByText("/launch-docs")).toBeInTheDocument();
-    expect(screen.getByText("7")).toBeInTheDocument();
+    expect(screen.getByText("twitter.com")).toBeInTheDocument();
+    expect(screen.getByText("US")).toBeInTheDocument();
   });
 
-  it("renders the explicit empty state copy for links without clicks", async () => {
+  it("renders explicit empty states for links without click, referrer, or geo data", async () => {
     authMock.mockResolvedValue({ user: { id: "user-123" } });
     overviewMock.mockResolvedValue({
       id: "link-123",
@@ -75,10 +96,14 @@ describe("src/app/(dashboard)/dashboard/links/[id]/analytics/page.tsx", () => {
       totalClicks: 0,
     });
     timeseriesMock.mockResolvedValue([]);
+    referrerMock.mockResolvedValue([]);
+    geoMock.mockResolvedValue([]);
 
     render(await LinkAnalyticsPage({ params: Promise.resolve({ id: "link-123" }) }));
 
     expect(screen.getByText("No clicks yet")).toBeInTheDocument();
+    expect(screen.getByText("No referrer data yet")).toBeInTheDocument();
+    expect(screen.getByText("No geographic data yet")).toBeInTheDocument();
   });
 
   it("calls notFound when the session is missing", async () => {
