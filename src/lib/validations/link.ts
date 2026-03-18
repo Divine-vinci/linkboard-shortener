@@ -19,6 +19,7 @@ const MAX_TITLE_LENGTH = 120;
 const MAX_DESCRIPTION_LENGTH = 500;
 const MAX_TAG_LENGTH = 24;
 const MAX_TAG_COUNT = 8;
+const MAX_LIBRARY_QUERY_LENGTH = 200;
 const EXPIRATION_MIN_FUTURE_MS = 60_000;
 
 const httpUrlSchema = z
@@ -247,9 +248,23 @@ export const updateLinkSchema = updateLinkFieldsSchema.refine(
   },
 );
 
+export const linkLibraryQuerySchema = z.object({
+  q: z.preprocess(
+    emptyStringToUndefined,
+    z.string().trim().min(1).max(MAX_LIBRARY_QUERY_LENGTH, `Search query must be at most ${MAX_LIBRARY_QUERY_LENGTH} characters`).optional(),
+  ),
+  tag: z.preprocess(
+    emptyStringToUndefined,
+    z.string().trim().toLowerCase().min(1).max(MAX_TAG_LENGTH, `Tag must be at most ${MAX_TAG_LENGTH} characters`).optional(),
+  ),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 export type CreateLinkSchemaInput = z.input<typeof createLinkSchema>;
 export type CreateLinkInput = z.output<typeof createLinkSchema>;
 export type UpdateLinkMetadataSchemaInput = z.input<typeof updateLinkMetadataSchema>;
 export type UpdateLinkMetadataInput = z.output<typeof updateLinkMetadataSchema>;
 export type UpdateLinkSchemaInput = z.input<typeof updateLinkSchema>;
 export type UpdateLinkInput = z.output<typeof updateLinkSchema>;
+export type LinkLibraryQueryInput = z.output<typeof linkLibraryQuerySchema>;

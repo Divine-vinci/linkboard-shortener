@@ -2,6 +2,7 @@
 
 import type { Link } from "@prisma/client";
 
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 function formatExpiration(expiresAt: Date) {
@@ -64,18 +65,10 @@ type LinkLibraryItem = Pick<
   "id" | "slug" | "targetUrl" | "title" | "description" | "tags" | "expiresAt" | "createdAt"
 >;
 
-type LinkUpdatePayload = {
-  id: string;
-  slug: string;
-  targetUrl: string;
-  title: string | null;
-  description: string | null;
-  tags: string[];
-  expiresAt: string | null;
-};
-
 type LinkUpdateResponse = {
-  data?: LinkUpdatePayload;
+  data?: {
+    targetUrl: string;
+  };
   error?: {
     message?: string;
     details?: {
@@ -95,11 +88,10 @@ type LinkDeleteResponse = {
 type LinkCardProps = {
   currentTimeMs: number;
   link: LinkLibraryItem;
-  onLinkDeleted: (linkId: string) => void;
-  onLinkUpdated: (link: LinkUpdatePayload) => void;
 };
 
-function LinkCard({ link, currentTimeMs, onLinkDeleted, onLinkUpdated }: LinkCardProps) {
+function LinkCard({ link, currentTimeMs }: LinkCardProps) {
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [draftTargetUrl, setDraftTargetUrl] = useState(link.targetUrl);
   const [fieldError, setFieldError] = useState<string | null>(null);
@@ -137,14 +129,9 @@ function LinkCard({ link, currentTimeMs, onLinkDeleted, onLinkUpdated }: LinkCar
         return;
       }
 
-      if (!payload.data) {
-        setFormError("Unable to update link right now.");
-        return;
-      }
-
-      onLinkUpdated(payload.data);
-      setDraftTargetUrl(payload.data.targetUrl);
+      setDraftTargetUrl(payload.data?.targetUrl ?? draftTargetUrl);
       setIsEditing(false);
+      router.refresh();
     } catch {
       setFormError("Unable to update link right now. Please check your connection and try again.");
     } finally {
@@ -176,7 +163,7 @@ function LinkCard({ link, currentTimeMs, onLinkDeleted, onLinkUpdated }: LinkCar
         return;
       }
 
-      onLinkDeleted(link.id);
+      router.refresh();
     } catch {
       setFormError("Unable to delete link right now. Please check your connection and try again.");
     } finally {
@@ -201,20 +188,20 @@ function LinkCard({ link, currentTimeMs, onLinkDeleted, onLinkUpdated }: LinkCar
   return (
     <li className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
       <div className="space-y-3">
-        <div className="space-y-1">
+        <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-medium text-emerald-300">/{link.slug}</p>
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="rounded-full border border-zinc-700 px-3 py-1 text-xs font-medium text-zinc-200 transition hover:border-emerald-400 hover:text-emerald-200"
+                className="rounded-full border border-zinc-700 px-3 py-1 text-xs font-medium text-zinc-200 transition hover:border-emerald-400 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
                 onClick={handleStartEdit}
               >
                 Edit
               </button>
               <button
                 type="button"
-                className="rounded-full border border-rose-500/40 px-3 py-1 text-xs font-medium text-rose-200 transition hover:border-rose-400 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-rose-500/40 px-3 py-1 text-xs font-medium text-rose-200 transition hover:border-rose-400 hover:text-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={handleDelete}
                 disabled={isDeleting || isSubmitting}
               >
@@ -224,12 +211,17 @@ function LinkCard({ link, currentTimeMs, onLinkDeleted, onLinkUpdated }: LinkCar
           </div>
           <a
             href={link.targetUrl}
-            className="break-all text-sm text-zinc-300 underline underline-offset-4"
+            className="break-all text-sm text-zinc-300 underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
           >
             {link.targetUrl}
           </a>
         </div>
-        <LinkExpirationBadge expiresAt={link.expiresAt} currentTimeMs={currentTimeMs} />
+
+        <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+          <LinkExpirationBadge expiresAt={link.expiresAt} currentTimeMs={currentTimeMs} />
+          <span className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1">Clicks: —</span>
+          <span className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1">No boards</span>
+        </div>
       </div>
 
       {isEditing ? (
@@ -281,32 +273,12 @@ function LinkCard({ link, currentTimeMs, onLinkDeleted, onLinkUpdated }: LinkCar
 type LinkLibraryProps = {
   currentTimeMs: number;
   links: LinkLibraryItem[];
+  query?: string;
+  tag?: string;
 };
 
-export function LinkLibrary({ links: initialLinks, currentTimeMs }: LinkLibraryProps) {
-  const [links, setLinks] = useState(initialLinks);
-
-  function handleLinkUpdated(updatedLink: LinkUpdatePayload) {
-    setLinks((currentLinks) =>
-      currentLinks.map((link) =>
-        link.id === updatedLink.id
-          ? {
-              ...link,
-              slug: updatedLink.slug,
-              targetUrl: updatedLink.targetUrl,
-              title: updatedLink.title,
-              description: updatedLink.description,
-              tags: updatedLink.tags,
-              expiresAt: updatedLink.expiresAt ? new Date(updatedLink.expiresAt) : null,
-            }
-          : link,
-      ),
-    );
-  }
-
-  function handleLinkDeleted(linkId: string) {
-    setLinks((currentLinks) => currentLinks.filter((link) => link.id !== linkId));
-  }
+export function LinkLibrary({ links, currentTimeMs, query, tag }: LinkLibraryProps) {
+  const hasFilters = Boolean(query || tag);
 
   return (
     <section className="space-y-4 rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6">
@@ -316,7 +288,9 @@ export function LinkLibrary({ links: initialLinks, currentTimeMs }: LinkLibraryP
       </div>
 
       {links.length === 0 ? (
-        <p className="text-sm text-zinc-500">You haven&apos;t created any links yet.</p>
+        <p className="text-sm text-zinc-500">
+          {hasFilters ? "No links matched your current search or tag filter." : "You haven\'t created any links yet."}
+        </p>
       ) : (
         <ul className="space-y-3">
           {links.map((link) => (
@@ -324,8 +298,6 @@ export function LinkLibrary({ links: initialLinks, currentTimeMs }: LinkLibraryP
               key={link.id}
               link={link}
               currentTimeMs={currentTimeMs}
-              onLinkDeleted={handleLinkDeleted}
-              onLinkUpdated={handleLinkUpdated}
             />
           ))}
         </ul>

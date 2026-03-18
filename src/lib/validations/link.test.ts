@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createLinkSchema,
   customSlugSchema,
+  linkLibraryQuerySchema,
   optionalExpiresAtSchema,
   RESERVED_SLUGS,
   updateLinkMetadataSchema,
@@ -350,5 +351,26 @@ describe("src/lib/validations/link.ts", () => {
         expect(parsed.error.flatten().formErrors).toContain("At least one link field is required");
       }
     });
+  });
+});
+
+describe("linkLibraryQuerySchema", () => {
+  it("applies defaults and trims optional values", () => {
+    expect(linkLibraryQuerySchema.parse({ q: "  docs ", tag: " Launch " })).toEqual({
+      q: "docs",
+      tag: "launch",
+      page: 1,
+      limit: 20,
+    });
+  });
+
+  it("rejects invalid pagination bounds", () => {
+    const parsed = linkLibraryQuerySchema.safeParse({ page: "0", limit: "101" });
+
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.flatten().fieldErrors.page).toContain("Too small: expected number to be >=1");
+      expect(parsed.error.flatten().fieldErrors.limit).toContain("Too big: expected number to be <=100");
+    }
   });
 });

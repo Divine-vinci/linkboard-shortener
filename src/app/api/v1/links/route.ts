@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse, toLinkResponse } from "@/lib/api-response";
 import { auth } from "@/lib/auth/config";
-import { createLink, findLinkBySlug } from "@/lib/db/links";
+import { createLink, findLinkBySlug, findLinksForLibrary } from "@/lib/db/links";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { generateSlug } from "@/lib/slug";
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
-import { createLinkSchema } from "@/lib/validations/link";
+import { createLinkSchema, linkLibraryQuerySchema } from "@/lib/validations/link";
 
 async function generateUniqueSlug() {
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -61,6 +61,54 @@ async function createLinkWithGeneratedSlug(data: {
   }
 
   throw new AppError("CONFLICT", "Unable to generate a unique short link", 409);
+}
+
+export async function GET(request: Request) {
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return NextResponse.json(
+      errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
+      { status: 401 },
+    );
+  }
+
+  const url = new URL(request.url);
+  const parsed = linkLibraryQuerySchema.safeParse({
+    q: url.searchParams.get("q") ?? undefined,
+    tag: url.searchParams.get("tag") ?? undefined,
+    page: url.searchParams.get("page") ?? undefined,
+    limit: url.searchParams.get("limit") ?? undefined,
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      errorResponse(new AppError("VALIDATION_ERROR", "Invalid link library query", 400), {
+        fields: fieldErrorsFromZod(parsed.error),
+      }),
+      { status: 400 },
+    );
+  }
+
+  const { q, tag, page, limit } = parsed.data;
+  const { links, total } = await findLinksForLibrary({
+    userId,
+    query: q,
+    tag,
+    page,
+    limit,
+  });
+  const offset = (page - 1) * limit;
+
+  return NextResponse.json({
+    data: links.map((link) => toLinkResponse(link)),
+    pagination: {
+      total,
+      limit,
+      offset,
+    },
+  });
 }
 
 export async function POST(request: Request) {

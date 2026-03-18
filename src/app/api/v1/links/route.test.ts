@@ -9,13 +9,14 @@ vi.mock("@/lib/auth/config", () => ({
 vi.mock("@/lib/db/links", () => ({
   createLink: vi.fn(),
   findLinkBySlug: vi.fn(),
+  findLinksForLibrary: vi.fn(),
 }));
 
 vi.mock("@/lib/slug", () => ({
   generateSlug: vi.fn(),
 }));
 
-const { POST } = await import("@/app/api/v1/links/route");
+const { GET, POST } = await import("@/app/api/v1/links/route");
 const authModule = await import("@/lib/auth/config");
 const links = await import("@/lib/db/links");
 const slug = await import("@/lib/slug");
@@ -443,6 +444,93 @@ describe("src/app/api/v1/links/route.ts", () => {
       tags: undefined,
       expiresAt: undefined,
       userId: "user-123",
+    });
+  });
+});
+
+describe("GET src/app/api/v1/links/route.ts", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns paginated library data for authenticated users", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.findLinksForLibrary).mockResolvedValue({
+      links: [buildLink({ slug: "docs-1", tags: ["docs"] })],
+      total: 41,
+    });
+
+    const response = await GET(new Request("http://localhost:3000/api/v1/links?q=docs&tag=docs&page=2&limit=20"));
+
+    expect(response.status).toBe(200);
+    expect(links.findLinksForLibrary).toHaveBeenCalledWith({
+      userId: "user-123",
+      query: "docs",
+      tag: "docs",
+      page: 2,
+      limit: 20,
+    });
+    await expect(response.json()).resolves.toEqual({
+      data: [
+        {
+          id: "link-123",
+          slug: "docs-1",
+          targetUrl: "https://example.com",
+          title: null,
+          description: null,
+          tags: ["docs"],
+          expiresAt: null,
+          userId: "user-123",
+          createdAt: "2026-03-17T18:00:00.000Z",
+          updatedAt: "2026-03-17T18:00:00.000Z",
+        },
+      ],
+      pagination: {
+        total: 41,
+        limit: 20,
+        offset: 20,
+      },
+    });
+  });
+
+  it("returns 400 for invalid query params", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+
+    const response = await GET(new Request("http://localhost:3000/api/v1/links?page=0&limit=101"));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid link library query",
+        details: {
+          fields: {
+            page: "Too small: expected number to be >=1",
+            limit: "Too big: expected number to be <=100",
+          },
+        },
+      },
+    });
+    expect(links.findLinksForLibrary).not.toHaveBeenCalled();
+  });
+
+  it("returns 401 for unauthenticated library requests", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue(null);
+
+    const response = await GET(new Request("http://localhost:3000/api/v1/links"));
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
+      },
     });
   });
 });
