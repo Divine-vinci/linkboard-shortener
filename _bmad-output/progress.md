@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 2.8 Link Library with Search and Filter
+- Current story: Story 2.9 Create Link with Board Assignment
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Heartbeat recovery resumed Story 2.8 and spawned Claude ACP code-review session agent:claude:acp:d5522cc1-c816-450c-a500-dc3d5a9135c0.
-- Next step: Poll ACP session agent:claude:acp:d5522cc1-c816-450c-a500-dc3d5a9135c0 for Story 2.8 code-review completion
+- Last action: Recovered stalled Story 2.9 create-story locally, wrote the story file, and marked it ready-for-dev.
+- Next step: Start workflow: dev-story
 
 ## Latest Completed Session
 - subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
@@ -76,7 +76,7 @@
 - [x] Story 2.5: Update Link Target URL (commit: 3c245f8)
 - [x] Story 2.6: Delete Links (commit: 7267370)
 - [x] Story 2.7: Redirect Engine with Redis Caching (commit: 2f5a8d2)
-- [ ] Story 2.8: Link Library with Search and Filter (in review)
+- [x] Story 2.8: Link Library with Search and Filter (commit: 9c2a541)
 - [ ] Story 2.9: Create Link with Board Assignment
 
 ## Completed Workflows
@@ -130,7 +130,9 @@
 - [x] Story 2.6 loop complete (commit: 7267370)
 - [x] code-review — Story 2.7 (output: implementation-artifacts/2-7-code-review.md, heartbeat fallback after ACP drift)
 - [x] Story 2.7 loop complete (commit: 2f5a8d2)
+- [x] code-review — Story 2.8 (output: implementation-artifacts/2-8-code-review.md, fallback review after Claude ACP timeout)
+- [x] Story 2.8 loop complete (commit: 9c2a541)
 
 ## Blockers
 - Mission Control task mapping is incomplete in progress.md; local repo remains source of truth.
-- Claude ACP code-review sessions produced no transcript output twice earlier in the sprint; fallback/local reconciliation was used where needed.
+- Claude ACP code-review sessions produced no transcript output multiple times in the sprint; fallback/local reconciliation was used where needed, including Story 2.8 after timeout/no-output.

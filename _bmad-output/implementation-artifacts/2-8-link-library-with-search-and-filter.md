@@ -1,6 +1,6 @@
 # Story 2.8: Link Library with Search and Filter
 
-Status: review
+Status: done
 
 ## Story
 
@@ -22,55 +22,55 @@ so that I can quickly find any link I've created.
 
 ## Tasks / Subtasks
 
-- [ ] Add server-side search/filter/paginate query function (AC: #1, #2, #3, #4)
-  - [ ] Add `findLinksForLibrary()` to `src/lib/db/links.ts` — accepts `userId`, `query`, `tag`, `page`, `limit`; returns `{ links, total }`
-  - [ ] Use Prisma `where` with `OR` for search across `title`, `slug`, `targetUrl` using `contains` (case-insensitive via `mode: "insensitive"`)
-  - [ ] Use Prisma `where` with `has` for tag filter on the `tags` string array
-  - [ ] Apply offset-based pagination: `skip = (page - 1) * limit`, `take = limit`
-  - [ ] Return total count via `prisma.link.count()` with same where clause
-  - [ ] Write tests: `src/lib/db/links.test.ts` (extend existing)
+- [x] Add server-side search/filter/paginate query function (AC: #1, #2, #3, #4)
+  - [x] Add `findLinksForLibrary()` to `src/lib/db/links.ts` — accepts `userId`, `query`, `tag`, `page`, `limit`; returns `{ links, total }`
+  - [x] Use Prisma `where` with `OR` for search across `title`, `slug`, `targetUrl` using `contains` (case-insensitive via `mode: "insensitive"`)
+  - [x] Use Prisma `where` with `has` for tag filter on the `tags` string array
+  - [x] Apply offset-based pagination: `skip = (page - 1) * limit`, `take = limit`
+  - [x] Return total count via `prisma.link.count()` with same where clause
+  - [x] Write tests: `src/lib/db/links.library.test.ts`
 
-- [ ] Add Zod validation schema for search/filter query params (AC: #2, #3, #4)
-  - [ ] Add `linkLibraryQuerySchema` to `src/lib/validations/link.ts` — validates `q` (optional string, max 200 chars), `tag` (optional string, max 24 chars), `page` (optional int, min 1, default 1), `limit` (optional int, min 1, max 100, default 20)
+- [x] Add Zod validation schema for search/filter query params (AC: #2, #3, #4)
+  - [x] Add `linkLibraryQuerySchema` to `src/lib/validations/link.ts` — validates `q` (optional string, max 200 chars), `tag` (optional string, max 24 chars), `page` (optional int, min 1, default 1), `limit` (optional int, min 1, max 100, default 20)
 
-- [ ] Create API endpoint for paginated link listing (AC: #1, #2, #3, #4)
-  - [ ] Create `src/app/api/v1/links/route.ts` — GET handler (if not exists, or add GET to existing)
-  - [ ] Parse and validate query params with `linkLibraryQuerySchema`
-  - [ ] Call `findLinksForLibrary()` with validated params
-  - [ ] Return `{ data: links[], pagination: { total, limit, offset } }` response format
-  - [ ] Write route handler tests
+- [x] Create API endpoint for paginated link listing (AC: #1, #2, #3, #4)
+  - [x] Create `src/app/api/v1/links/route.ts` — GET handler added to existing file
+  - [x] Parse and validate query params with `linkLibraryQuerySchema`
+  - [x] Call `findLinksForLibrary()` with validated params
+  - [x] Return `{ data: links[], pagination: { total, limit, offset } }` response format
+  - [x] Write route handler tests
 
-- [ ] Refactor link library page to use URL-based search/filter state (AC: #1, #2, #3, #4, #5)
-  - [ ] Update `src/app/(dashboard)/links/page.tsx` — server component reads `searchParams`, calls `findLinksForLibrary()`
-  - [ ] Pass search results + pagination metadata to client components
+- [x] Refactor link library page to use URL-based search/filter state (AC: #1, #2, #3, #4, #5)
+  - [x] Update `src/app/(dashboard)/links/page.tsx` — server component reads `searchParams`, calls `findLinksForLibrary()`
+  - [x] Pass search results + pagination metadata to client components
 
-- [ ] Create search and filter controls component (AC: #2, #3)
-  - [ ] Create `src/components/links/link-filters.tsx` — client component with search input and tag filter
-  - [ ] Search input: `useSearchParams()` + `useRouter()` to update URL on submit (debounced or on Enter)
-  - [ ] Tag filter: dropdown or clickable tag list from available tags
-  - [ ] Keyboard accessible with visible focus indicators
+- [x] Create search and filter controls component (AC: #2, #3)
+  - [x] Create `src/components/links/link-filters.tsx` — client component with search input and tag filter
+  - [x] Search input: `useSearchParams()` + `useRouter()` to update URL on submit
+  - [x] Tag filter: dropdown from available tags
+  - [x] Keyboard accessible with visible focus indicators
 
-- [ ] Create pagination component (AC: #4)
-  - [ ] Create `src/components/links/link-pagination.tsx` — client component with page navigation
-  - [ ] Shows page numbers, prev/next buttons, current page highlight
-  - [ ] Updates URL `?page=` param on click
-  - [ ] Keyboard accessible
+- [x] Create pagination component (AC: #4)
+  - [x] Create `src/components/links/link-pagination.tsx` — client component with page navigation
+  - [x] Shows page numbers with ellipsis truncation, prev/next buttons, current page highlight
+  - [x] Updates URL `?page=` param on click
+  - [x] Keyboard accessible
 
-- [ ] Update LinkLibrary component for new data shape (AC: #1, #5)
-  - [ ] Modify `src/components/links/link-library.tsx` — remove client-side state management for the links list
-  - [ ] Accept paginated data from server component instead of all links
-  - [ ] Keep inline edit/delete functionality but trigger router.refresh() after mutations instead of local state updates
-  - [ ] Add "No boards" placeholder for board membership display (FR29 — boards built in Epic 3)
-  - [ ] Add click count placeholder (analytics built in Epic 6)
+- [x] Update LinkLibrary component for new data shape (AC: #1, #5)
+  - [x] Modify `src/components/links/link-library.tsx` — remove client-side state management for the links list
+  - [x] Accept paginated data from server component instead of all links
+  - [x] Keep inline edit/delete functionality but trigger router.refresh() after mutations instead of local state updates
+  - [x] Add "No boards" placeholder for board membership display (FR29 — boards built in Epic 3)
+  - [x] Add click count placeholder (analytics built in Epic 6)
 
-- [ ] Add loading state (AC: #5)
-  - [ ] Create `src/app/(dashboard)/links/loading.tsx` — skeleton UI for link library page
+- [x] Add loading state (AC: #5)
+  - [x] Create `src/app/(dashboard)/links/loading.tsx` — skeleton UI for link library page
 
-- [ ] Write comprehensive tests (AC: all)
-  - [ ] DB query tests for `findLinksForLibrary` (search, tag filter, pagination, empty results)
-  - [ ] API route handler tests for GET `/api/v1/links`
-  - [ ] Component tests for `link-filters.tsx` and `link-pagination.tsx`
-  - [ ] Regression: all existing Story 2.1–2.7 tests (207 passed, 8 skipped) must continue passing
+- [x] Write comprehensive tests (AC: all)
+  - [x] DB query tests for `findLinksForLibrary` (search, tag filter, pagination, empty results)
+  - [x] API route handler tests for GET `/api/v1/links`
+  - [x] Component tests for `link-filters.tsx` and `link-pagination.tsx`
+  - [x] Regression: all existing Story 2.1–2.7 tests continue passing (226 total, 8 skipped)
 
 ## Dev Notes
 
@@ -268,4 +268,34 @@ openai/gpt-5.4
 - `src/lib/db/links.library.test.ts`
 - `src/lib/db/links.ts`
 - `src/lib/validations/link.test.ts`
-- `src/lib/validations/link.ts
+- `src/lib/validations/link.ts`
+
+### Change Log
+
+- 2026-03-18: Code review by claude-opus-4-6. Fixed 6 issues (3 HIGH, 3 MEDIUM). See Senior Developer Review below.
+
+## Senior Developer Review (AI)
+
+**Reviewer:** claude-opus-4-6 | **Date:** 2026-03-18
+
+### Findings and Fixes Applied
+
+| # | Severity | Issue | File | Fix |
+|---|----------|-------|------|-----|
+| 1 | HIGH | `availableTags` computed from current page only — tag filter dropdown showed different tags per page | `page.tsx:46` | Added `getDistinctTagsForUser()` in `links.ts` that queries ALL user tags; called from page.tsx |
+| 2 | HIGH | GET handler had no error handling — DB errors returned unhandled 500 | `route.ts:66-112` | Added try/catch with `AppError` handling and `logger.error("links.list.unexpected_error")` |
+| 3 | HIGH | All story tasks marked `[ ]` despite being complete | story file | Updated all task checkboxes to `[x]` |
+| 4 | MEDIUM | GET handler missing structured logging | `route.ts` | Fixed as part of issue #2 — added logger.error for unexpected errors |
+| 5 | MEDIUM | Pagination rendered ALL page numbers without truncation | `link-pagination.tsx:31` | Added `getPageNumbers()` helper with ellipsis pattern (max ~7 buttons) |
+| 6 | MEDIUM | No page bounds clamping — `?page=999` showed broken pagination | `page.tsx` | Added `clampedPage = Math.min(filters.page, totalPages)` |
+
+### Remaining Items (LOW — not fixed)
+
+- `link-pagination.test.tsx` and `link-filters.test.tsx` could use additional edge case tests (Previous/Next disabled states, Clear filters button)
+- `_bmad/state.json` modified in git but not in story File List (internal BMad state, acceptable)
+
+### Test Results After Fixes
+
+- **226 passed**, 8 skipped (was 215 before review)
+- 11 new tests added: `getDistinctTagsForUser` (3), GET error handling (1), pagination truncation (7)
+- All regression tests continue passing

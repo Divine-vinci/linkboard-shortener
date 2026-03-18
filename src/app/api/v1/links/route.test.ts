@@ -520,6 +520,18 @@ describe("GET src/app/api/v1/links/route.ts", () => {
     expect(links.findLinksForLibrary).not.toHaveBeenCalled();
   });
 
+  it("re-throws unexpected errors from findLinksForLibrary", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.findLinksForLibrary).mockRejectedValue(new Error("database connection lost"));
+
+    await expect(GET(new Request("http://localhost:3000/api/v1/links"))).rejects.toThrow(
+      "database connection lost",
+    );
+  });
+
   it("returns 401 for unauthenticated library requests", async () => {
     vi.mocked(mockedAuth).mockResolvedValue(null);
 

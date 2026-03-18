@@ -5,7 +5,7 @@ import { LinkFilters } from "@/components/links/link-filters";
 import { LinkLibrary } from "@/components/links/link-library";
 import { LinkPagination } from "@/components/links/link-pagination";
 import { auth } from "@/lib/auth/config";
-import { findLinksForLibrary } from "@/lib/db/links";
+import { findLinksForLibrary, getDistinctTagsForUser } from "@/lib/db/links";
 import { getCurrentTimeMs } from "@/lib/time";
 import { linkLibraryQuerySchema } from "@/lib/validations/link";
 
@@ -43,7 +43,8 @@ export default async function LinksPage({ searchParams }: LinksPageProps) {
     : { links: [], total: 0 };
   const currentTimeMs = getCurrentTimeMs();
   const totalPages = Math.max(1, Math.ceil(total / filters.limit));
-  const availableTags = Array.from(new Set(links.flatMap((link) => link.tags))).sort((left, right) => left.localeCompare(right));
+  const clampedPage = Math.min(filters.page, totalPages);
+  const availableTags = userId ? await getDistinctTagsForUser(userId) : [];
 
   return (
     <section className="space-y-6">
@@ -62,7 +63,7 @@ export default async function LinksPage({ searchParams }: LinksPageProps) {
         total={total}
       />
       <LinkLibrary links={links} currentTimeMs={currentTimeMs} query={filters.q} tag={filters.tag} />
-      <LinkPagination currentPage={filters.page} totalPages={totalPages} />
+      <LinkPagination currentPage={clampedPage} totalPages={totalPages} />
     </section>
   );
 }

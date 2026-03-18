@@ -92,23 +92,36 @@ export async function GET(request: Request) {
   }
 
   const { q, tag, page, limit } = parsed.data;
-  const { links, total } = await findLinksForLibrary({
-    userId,
-    query: q,
-    tag,
-    page,
-    limit,
-  });
-  const offset = (page - 1) * limit;
 
-  return NextResponse.json({
-    data: links.map((link) => toLinkResponse(link)),
-    pagination: {
-      total,
+  try {
+    const { links, total } = await findLinksForLibrary({
+      userId,
+      query: q,
+      tag,
+      page,
       limit,
-      offset,
-    },
-  });
+    });
+    const offset = (page - 1) * limit;
+
+    return NextResponse.json({
+      data: links.map((link) => toLinkResponse(link)),
+      pagination: {
+        total,
+        limit,
+        offset,
+      },
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json(errorResponse(error), { status: error.statusCode });
+    }
+
+    logger.error("links.list.unexpected_error", {
+      error: error instanceof Error ? error.message : String(error),
+      userId,
+    });
+    throw error;
+  }
 }
 
 export async function POST(request: Request) {

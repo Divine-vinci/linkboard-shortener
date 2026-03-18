@@ -108,6 +108,17 @@ export function buildLinkLibraryWhereClause({
   };
 }
 
+export async function getDistinctTagsForUser(userId: string): Promise<string[]> {
+  const links = await prisma.link.findMany({
+    where: { userId },
+    select: { tags: true },
+  });
+
+  return Array.from(new Set(links.flatMap((link) => link.tags))).sort((left, right) =>
+    left.localeCompare(right),
+  );
+}
+
 export async function findLinksForLibrary({
   userId,
   query,

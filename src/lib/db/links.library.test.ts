@@ -25,7 +25,7 @@ vi.mock("@/lib/db/client", () => ({
   },
 }));
 
-const { buildLinkLibraryWhereClause, findLinksForLibrary } = await import("@/lib/db/links");
+const { buildLinkLibraryWhereClause, findLinksForLibrary, getDistinctTagsForUser } = await import("@/lib/db/links");
 
 describe("findLinksForLibrary", () => {
   beforeEach(() => {
@@ -94,5 +94,43 @@ describe("findLinksForLibrary", () => {
       ],
       tags: { has: "docs" },
     });
+  });
+});
+
+describe("getDistinctTagsForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns sorted unique tags from all user links", async () => {
+    findMany.mockResolvedValue([
+      { tags: ["beta", "docs"] },
+      { tags: ["alpha", "docs"] },
+      { tags: ["beta", "gamma"] },
+    ]);
+
+    const result = await getDistinctTagsForUser("user-123");
+
+    expect(findMany).toHaveBeenCalledWith({
+      where: { userId: "user-123" },
+      select: { tags: true },
+    });
+    expect(result).toEqual(["alpha", "beta", "docs", "gamma"]);
+  });
+
+  it("returns an empty array when user has no links", async () => {
+    findMany.mockResolvedValue([]);
+
+    const result = await getDistinctTagsForUser("user-123");
+
+    expect(result).toEqual([]);
+  });
+
+  it("returns an empty array when links have no tags", async () => {
+    findMany.mockResolvedValue([{ tags: [] }, { tags: [] }]);
+
+    const result = await getDistinctTagsForUser("user-123");
+
+    expect(result).toEqual([]);
   });
 });
