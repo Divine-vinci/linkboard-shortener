@@ -24,13 +24,17 @@ function buildBoardLink(overrides: Partial<Parameters<typeof BoardLinkAdd>[0]["i
       targetUrl: "https://example.com/docs",
       title: "Launch docs",
       tags: ["docs"],
+      expiresAt: null,
     },
     ...overrides,
   };
 }
 
 describe("src/components/boards/board-link-add.tsx", () => {
+  const now = new Date("2026-03-18T00:00:00.000Z");
+
   beforeEach(() => {
+    vi.spyOn(Date, "now").mockReturnValue(now.getTime());
     vi.clearAllMocks();
     global.fetch = vi.fn();
   });
@@ -53,6 +57,47 @@ describe("src/components/boards/board-link-add.tsx", () => {
     expect(screen.getByText("docs")).toBeInTheDocument();
   });
 
+  it("renders metadata placeholders and accessibility list semantics", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: [] }),
+    } as Response);
+
+    render(
+      <BoardLinkAdd
+        boardId="board-123"
+        initialLinks={[buildBoardLink()]}
+      />,
+    );
+
+    expect(await screen.findByRole("list", { name: "Board links" })).toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    expect(screen.getByText("0 clicks")).toHaveClass("text-zinc-500");
+    expect(screen.queryByText("Expired")).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["2026-03-17T23:59:59.000Z", "Expired", "text-rose-300"],
+    ["2026-03-18T00:00:00.000Z", "Expiring soon", "text-amber-300"],
+    ["2026-03-20T00:00:00.000Z", "Expiring soon", "text-amber-300"],
+    ["2026-04-20T00:00:00.000Z", "Active", "text-emerald-300"],
+  ])("renders %s as %s expiration state", async (expiresAt, label, className) => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: [] }),
+    } as Response);
+
+    render(
+      <BoardLinkAdd
+        boardId="board-123"
+        initialLinks={[buildBoardLink({ link: { ...buildBoardLink().link, expiresAt } })]}
+      />,
+    );
+
+    expect(await screen.findByText(label)).toHaveClass(className);
+    expect(screen.getByText("0 clicks")).toBeInTheDocument();
+  });
+
   it("submits add-link requests", async () => {
     vi.mocked(global.fetch)
       .mockResolvedValueOnce({
@@ -65,6 +110,7 @@ describe("src/components/boards/board-link-add.tsx", () => {
               targetUrl: "https://example.com/roadmap",
               title: "Product roadmap",
               tags: ["planning"],
+              expiresAt: null,
             },
           ],
         }),
@@ -117,7 +163,7 @@ describe("src/components/boards/board-link-add.tsx", () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "Remove" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Remove Launch docs" }));
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenNthCalledWith(
@@ -173,6 +219,7 @@ describe("src/components/boards/board-link-add.tsx", () => {
               targetUrl: "https://example.com/wiki",
               title: "Team wiki",
               tags: ["ops"],
+              expiresAt: null,
             },
           }),
         ]}
@@ -231,6 +278,7 @@ describe("src/components/boards/board-link-add.tsx", () => {
               targetUrl: "https://example.com/wiki",
               title: "Team wiki",
               tags: ["ops"],
+              expiresAt: null,
             },
           }),
         ]}

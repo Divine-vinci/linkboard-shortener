@@ -89,6 +89,7 @@ export default async function BoardDetailPage({ params }: { params: Promise<{ id
             targetUrl: boardLink.link.targetUrl,
             title: boardLink.link.title,
             tags: boardLink.link.tags,
+            expiresAt: boardLink.link.expiresAt?.toISOString() ?? null,
           },
         }))}
       />

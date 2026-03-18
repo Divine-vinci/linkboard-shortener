@@ -9,6 +9,7 @@ type LinkOption = {
   targetUrl: string;
   title: string | null;
   tags: string[];
+  expiresAt: string | null;
 };
 
 type BoardLinkItem = {
@@ -82,6 +83,35 @@ function reorderItems(items: BoardLinkItem[], fromIndex: number, toIndex: number
     position: index,
   }));
 }
+
+function getExpirationStatus(expiresAt: string | null): {
+  label: string;
+  variant: 'active' | 'expired' | 'expiring-soon' | 'none';
+} {
+  if (!expiresAt) {
+    return { label: '', variant: 'none' };
+  }
+
+  const expiry = new Date(expiresAt);
+  const daysUntil = (expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+
+  if (daysUntil < 0) {
+    return { label: 'Expired', variant: 'expired' };
+  }
+
+  if (daysUntil <= 7) {
+    return { label: 'Expiring soon', variant: 'expiring-soon' };
+  }
+
+  return { label: 'Active', variant: 'active' };
+}
+
+const EXPIRATION_BADGE_STYLES = {
+  active: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+  expired: 'border-rose-500/30 bg-rose-500/10 text-rose-300',
+  'expiring-soon': 'border-amber-500/30 bg-amber-500/10 text-amber-300',
+  none: '',
+} as const;
 
 export function BoardLinkAdd({ boardId, initialLinks }: { boardId: string; initialLinks: BoardLinkItem[] }) {
   const router = useRouter();
@@ -327,11 +357,12 @@ export function BoardLinkAdd({ boardId, initialLinks }: { boardId: string; initi
       {boardLinks.length === 0 ? (
         <p className="text-sm text-zinc-500">This board does not contain any links yet.</p>
       ) : (
-        <ul className="space-y-3">
+        <ul role="list" aria-label="Board links" className="space-y-3">
           {boardLinks.map((item, index) => {
             const isFirst = index === 0;
             const isLast = index === boardLinks.length - 1;
             const controlsDisabled = isRemovingId !== null || isReordering;
+            const expirationStatus = getExpirationStatus(item.link.expiresAt);
 
             return (
               <li
@@ -346,15 +377,24 @@ export function BoardLinkAdd({ boardId, initialLinks }: { boardId: string; initi
                     </span>
                   </div>
                   <p className="text-sm text-zinc-400">{truncateUrl(item.link.targetUrl)}</p>
-                  {item.link.tags.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {item.link.tags.map((tag) => (
-                        <span key={tag} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-300">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
+                  <div className="inline-flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                    {item.link.tags.map((tag) => (
+                      <span key={tag} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-300">
+                        {tag}
+                      </span>
+                    ))}
+                    {expirationStatus.variant !== "none" ? (
+                      <span
+                        className={`rounded-full border px-2 py-1 ${EXPIRATION_BADGE_STYLES[expirationStatus.variant]}`}
+                      >
+                        {expirationStatus.label}
+                      </span>
+                    ) : null}
+                    <span className="text-zinc-500">
+                      {/* TODO(Epic 6): Replace with actual click count from ClickEvent aggregation */}
+                      0 clicks
+                    </span>
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 md:justify-end">
                   <button
@@ -379,6 +419,7 @@ export function BoardLinkAdd({ boardId, initialLinks }: { boardId: string; initi
                     type="button"
                     onClick={() => void handleRemove(item.linkId)}
                     disabled={isRemovingId === item.linkId || isReordering}
+                    aria-label={`Remove ${item.link.title ?? item.link.slug}`}
                     className="inline-flex items-center justify-center rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-200 transition hover:border-rose-400 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {isRemovingId === item.linkId ? "Removing..." : "Remove"}
