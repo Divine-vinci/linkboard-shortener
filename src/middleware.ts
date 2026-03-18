@@ -1,7 +1,8 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, waitUntil, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 import { env } from "@/config/env";
+import { captureClickEvent } from "@/lib/analytics/capture";
 import { getRedirectCache, setRedirectCache } from "@/lib/cache/redirect";
 import { findLinkBySlug } from "@/lib/db/links";
 import { logger } from "@/lib/logger";
@@ -66,7 +67,7 @@ async function resolveShortLinkRedirect(request: NextRequest) {
     }
 
     logger.info("redirect.cache_hit", { slug });
-    // TODO(Epic 6): waitUntil(captureClickEvent(cached.linkId, request))
+    waitUntil(captureClickEvent(cached.linkId, request));
     return NextResponse.redirect(cached.targetUrl, { status: 301 });
   }
 
@@ -88,7 +89,7 @@ async function resolveShortLinkRedirect(request: NextRequest) {
     expiresAt: link.expiresAt?.toISOString() ?? null,
   });
 
-  // TODO(Epic 6): waitUntil(captureClickEvent(link.id, request))
+  waitUntil(captureClickEvent(link.id, request));
   return NextResponse.redirect(link.targetUrl, { status: 301 });
 }
 

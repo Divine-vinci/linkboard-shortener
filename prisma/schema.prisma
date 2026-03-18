@@ -34,22 +34,37 @@ model User {
 }
 
 model Link {
-  id          String      @id @default(uuid()) @db.Uuid
-  slug        String      @unique
-  targetUrl   String      @map("target_url")
+  id          String       @id @default(uuid()) @db.Uuid
+  slug        String       @unique
+  targetUrl   String       @map("target_url")
   title       String?
   description String?
-  tags        String[]    @default([])
-  expiresAt   DateTime?   @map("expires_at")
-  userId      String      @map("user_id") @db.Uuid
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags        String[]     @default([])
+  expiresAt   DateTime?    @map("expires_at")
+  userId      String       @map("user_id") @db.Uuid
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   boardLinks  BoardLink[]
+  clickEvents ClickEvent[]
 
   @@index([slug], map: "idx_links_slug")
   @@index([userId], map: "idx_links_user_id")
   @@map("links")
+  @@schema("public")
+}
+
+model ClickEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  linkId    String   @map("link_id") @db.Uuid
+  clickedAt DateTime @default(now()) @map("clicked_at")
+  referrer  String?
+  country   String?
+  userAgent String   @default("unknown") @map("user_agent")
+  link      Link     @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@index([linkId, clickedAt], map: "idx_click_events_link_id_clicked_at")
+  @@map("click_events")
   @@schema("public")
 }
 
