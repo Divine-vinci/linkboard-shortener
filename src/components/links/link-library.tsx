@@ -86,18 +86,26 @@ type LinkUpdateResponse = {
   };
 };
 
+type LinkDeleteResponse = {
+  error?: {
+    message?: string;
+  };
+};
+
 type LinkCardProps = {
   currentTimeMs: number;
   link: LinkLibraryItem;
+  onLinkDeleted: (linkId: string) => void;
   onLinkUpdated: (link: LinkUpdatePayload) => void;
 };
 
-function LinkCard({ link, currentTimeMs, onLinkUpdated }: LinkCardProps) {
+function LinkCard({ link, currentTimeMs, onLinkDeleted, onLinkUpdated }: LinkCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draftTargetUrl, setDraftTargetUrl] = useState(link.targetUrl);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -144,6 +152,38 @@ function LinkCard({ link, currentTimeMs, onLinkUpdated }: LinkCardProps) {
     }
   }
 
+  async function handleDelete() {
+    setFieldError(null);
+    setFormError(null);
+
+    if (!window.confirm(`Delete /${link.slug}? This cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(`/api/v1/links/${link.id}`, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json()) as LinkDeleteResponse;
+        setFormError(payload.error?.message ?? "Unable to delete link right now.");
+        return;
+      }
+
+      onLinkDeleted(link.id);
+    } catch {
+      setFormError("Unable to delete link right now. Please check your connection and try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   function handleStartEdit() {
     setIsEditing(true);
     setDraftTargetUrl(link.targetUrl);
@@ -164,13 +204,23 @@ function LinkCard({ link, currentTimeMs, onLinkUpdated }: LinkCardProps) {
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-medium text-emerald-300">/{link.slug}</p>
-            <button
-              type="button"
-              className="rounded-full border border-zinc-700 px-3 py-1 text-xs font-medium text-zinc-200 transition hover:border-emerald-400 hover:text-emerald-200"
-              onClick={handleStartEdit}
-            >
-              Edit
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-full border border-zinc-700 px-3 py-1 text-xs font-medium text-zinc-200 transition hover:border-emerald-400 hover:text-emerald-200"
+                onClick={handleStartEdit}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                className="rounded-full border border-rose-500/40 px-3 py-1 text-xs font-medium text-rose-200 transition hover:border-rose-400 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={handleDelete}
+                disabled={isDeleting || isSubmitting}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
           </div>
           <a
             href={link.targetUrl}
@@ -221,6 +271,8 @@ function LinkCard({ link, currentTimeMs, onLinkUpdated }: LinkCardProps) {
         </form>
       ) : null}
 
+      {!isEditing && formError ? <p className="text-sm text-rose-400">{formError}</p> : null}
+
       <LinkMetadataBlock link={link} />
     </li>
   );
@@ -252,6 +304,10 @@ export function LinkLibrary({ links: initialLinks, currentTimeMs }: LinkLibraryP
     );
   }
 
+  function handleLinkDeleted(linkId: string) {
+    setLinks((currentLinks) => currentLinks.filter((link) => link.id !== linkId));
+  }
+
   return (
     <section className="space-y-4 rounded-3xl border border-zinc-800 bg-zinc-900/70 p-6">
       <div className="space-y-1">
@@ -268,6 +324,7 @@ export function LinkLibrary({ links: initialLinks, currentTimeMs }: LinkLibraryP
               key={link.id}
               link={link}
               currentTimeMs={currentTimeMs}
+              onLinkDeleted={handleLinkDeleted}
               onLinkUpdated={handleLinkUpdated}
             />
           ))}

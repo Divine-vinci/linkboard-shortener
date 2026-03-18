@@ -6,10 +6,10 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 2.5 Update Link Target URL
+- Current story: Story 2.6 Delete Links
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Heartbeat recovery verified Story 2.5 code-review output landed locally, completed the BMAD code-review workflow, and re-ran validation (180 tests passed, lint passed, build passed).
-- Next step: Start workflow: create-story
+- Last action: Started dev-story for Story 2.6 Delete Links via subagent `agent:main:subagent:7bf1d59e-eaa9-4fa6-bc27-793aa3e3850f`.
+- Next step: Poll subagent session agent:main:subagent:7bf1d59e-eaa9-4fa6-bc27-793aa3e3850f for dev-story completion
 
 ## Latest Completed Session
 - subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
@@ -67,8 +67,8 @@
 - [x] Story 2.2: Custom Slug Support and Validation
 - [x] Story 2.3: Link Metadata Management (commit: 9091138)
 - [x] Story 2.4: Link Expiration (commit: 5f5bbed)
-- [x] Story 2.5: Update Link Target URL (commit: pending)
-- [ ] Story 2.6: Delete Links
+- [x] Story 2.5: Update Link Target URL (commit: 3c245f8)
+- [ ] Story 2.6: Delete Links (spec: _bmad-output/implementation-artifacts/2-6-delete-links.md)
 - [ ] Story 2.7: Redirect Engine with Redis Caching
 - [ ] Story 2.8: Link Library with Search and Filter
 - [ ] Story 2.9: Create Link with Board Assignment
@@ -115,9 +115,10 @@
 - [x] code-review — Story 2.4
 - [x] Story 2.4 loop complete (commit: 5f5bbed)
 - [x] create-story — Story 2.5 (output: implementation-artifacts/2-5-update-link-target-url.md)
+- [x] create-story — Story 2.6 (output: implementation-artifacts/2-6-delete-links.md)
 - [x] dev-story — Story 2.5 (output: implementation-artifacts/2-5-dev-story-result.md)
 - [x] code-review — Story 2.5
-- [x] Story 2.5 loop complete (commit: pending)
+- [x] Story 2.5 loop complete (commit: 3c245f8)
 
 ## Blockers
 - Mission Control task mapping is incomplete in progress.md; local repo remains source of truth.

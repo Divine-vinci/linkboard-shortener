@@ -11,7 +11,7 @@ const [{ prisma }, linksModule, usersModule] = await Promise.all([
   import("./links"),
   import("./users"),
 ]);
-const { createLink, findLinkById, findLinkBySlug, findLinksByUserId, updateLink } = linksModule;
+const { createLink, deleteLink, findLinkById, findLinkBySlug, findLinksByUserId, updateLink } = linksModule;
 const { createUser } = usersModule;
 
 let dbReady = true;
@@ -138,6 +138,54 @@ describe.skipIf(!dbReady)("src/lib/db/links.ts", () => {
     });
 
     await expect(updateLink(link.id, otherUser.id, { title: "No access" })).resolves.toBeNull();
+  });
+
+  it("deletes an owned link and removes it from lookups", async () => {
+    const owner = await createUser({
+      email: `story-2-6-owner-${randomUUID()}@linkboard.dev`,
+    });
+    createdUserIds.push(owner.id);
+
+    const link = await createLink({
+      slug: `c${randomUUID().replace(/-/g, "").slice(0, 6)}`,
+      targetUrl: "https://example.com/delete-me",
+      userId: owner.id,
+      expiresAt: null,
+    });
+
+    expect(await deleteLink(link.id, owner.id)).toBe(true);
+    await expect(findLinkById(link.id, owner.id)).resolves.toBeNull();
+    await expect(findLinkBySlug(link.slug)).resolves.toBeNull();
+  });
+
+  it("returns false when deleting a non-existent link", async () => {
+    const owner = await createUser({
+      email: `story-2-6-missing-${randomUUID()}@linkboard.dev`,
+    });
+    createdUserIds.push(owner.id);
+
+    await expect(deleteLink(randomUUID(), owner.id)).resolves.toBe(false);
+  });
+
+  it("returns false when deleting a link owned by another user", async () => {
+    const owner = await createUser({
+      email: `story-2-6-owned-${randomUUID()}@linkboard.dev`,
+    });
+    const otherUser = await createUser({
+      email: `story-2-6-other-${randomUUID()}@linkboard.dev`,
+    });
+    createdUserIds.push(owner.id, otherUser.id);
+
+    const link = await createLink({
+      slug: `d${randomUUID().replace(/-/g, "").slice(0, 6)}`,
+      targetUrl: "https://example.com/keep-me",
+      userId: owner.id,
+      expiresAt: null,
+    });
+    createdLinkIds.push(link.id);
+
+    await expect(deleteLink(link.id, otherUser.id)).resolves.toBe(false);
+    await expect(findLinkById(link.id, owner.id)).resolves.toMatchObject({ id: link.id });
   });
 
   it("lists a user's links newest-first", async () => {

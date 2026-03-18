@@ -43,6 +43,20 @@ export async function updateLink(id: string, userId: string, data: UpdateLinkDat
   });
 }
 
+export async function deleteLink(id: string, userId: string): Promise<boolean> {
+  const link = await findLinkById(id, userId);
+
+  if (!link) {
+    return false;
+  }
+
+  await prisma.link.delete({
+    where: { id },
+  });
+
+  return true;
+}
+
 export async function findLinksByUserId(userId: string) {
   return prisma.link.findMany({
     where: { userId },

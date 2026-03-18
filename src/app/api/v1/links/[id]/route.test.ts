@@ -7,10 +7,11 @@ vi.mock("@/lib/auth/config", () => ({
 }));
 
 vi.mock("@/lib/db/links", () => ({
+  deleteLink: vi.fn(),
   updateLink: vi.fn(),
 }));
 
-const { PATCH } = await import("@/app/api/v1/links/[id]/route");
+const { DELETE, PATCH } = await import("@/app/api/v1/links/[id]/route");
 const authModule = await import("@/lib/auth/config");
 const links = await import("@/lib/db/links");
 
@@ -491,6 +492,115 @@ describe("src/app/api/v1/links/[id]/route.ts", () => {
         body: JSON.stringify({ targetUrl: "https://example.com/still-nope" }),
       }),
       { params: Promise.resolve({ id: "link-404" }) },
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "NOT_FOUND",
+        message: "Link not found",
+      },
+    });
+  });
+
+  it("deletes an owned link with a 204 response and empty body", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.deleteLink).mockResolvedValue(true);
+
+    const response = await DELETE(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "DELETE",
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(204);
+    expect(links.deleteLink).toHaveBeenCalledWith("link-123", "user-123");
+    expect(await response.text()).toBe("");
+  });
+
+  it("returns 404 when deleting a non-existent link", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.deleteLink).mockResolvedValue(false);
+
+    const response = await DELETE(
+      new Request("http://localhost:3000/api/v1/links/link-404", {
+        method: "DELETE",
+      }),
+      { params: Promise.resolve({ id: "link-404" }) },
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "NOT_FOUND",
+        message: "Link not found",
+      },
+    });
+  });
+
+  it("returns 404 when deleting a link not owned by the user", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    vi.mocked(links.deleteLink).mockResolvedValue(false);
+
+    const response = await DELETE(
+      new Request("http://localhost:3000/api/v1/links/link-999", {
+        method: "DELETE",
+      }),
+      { params: Promise.resolve({ id: "link-999" }) },
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "NOT_FOUND",
+        message: "Link not found",
+      },
+    });
+  });
+
+  it("returns 401 for unauthenticated delete requests", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue(null);
+
+    const response = await DELETE(
+      new Request("http://localhost:3000/api/v1/links/link-123", {
+        method: "DELETE",
+      }),
+      { params: Promise.resolve({ id: "link-123" }) },
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
+      },
+    });
+  });
+
+  it("returns 404 for invalid UUID link ids during delete", async () => {
+    vi.mocked(mockedAuth).mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T18:00:00.000Z",
+    });
+    const prismaValidationError = new Error("invalid input syntax for type uuid");
+    prismaValidationError.name = "PrismaClientValidationError";
+    vi.mocked(links.deleteLink).mockRejectedValue(prismaValidationError);
+
+    const response = await DELETE(
+      new Request("http://localhost:3000/api/v1/links/not-a-uuid", {
+        method: "DELETE",
+      }),
+      { params: Promise.resolve({ id: "not-a-uuid" }) },
     );
 
     expect(response.status).toBe(404);

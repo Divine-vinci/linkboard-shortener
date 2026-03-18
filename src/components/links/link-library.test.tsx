@@ -21,6 +21,7 @@ describe("src/components/links/link-library.tsx", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
+    vi.stubGlobal("confirm", vi.fn(() => true));
   });
 
   it("renders metadata when present", () => {
@@ -56,7 +57,7 @@ describe("src/components/links/link-library.tsx", () => {
     expect(screen.queryByLabelText(/link tags/i)).not.toBeInTheDocument();
   });
 
-  it("shows an edit button for each link", () => {
+  it("shows edit and delete actions for each link", () => {
     render(
       <LinkLibrary
         currentTimeMs={new Date("2026-03-17T18:00:00.000Z").getTime()}
@@ -65,6 +66,7 @@ describe("src/components/links/link-library.tsx", () => {
     );
 
     expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
   });
 
   it("opens the targetUrl edit form with the current url", () => {
@@ -152,6 +154,111 @@ describe("src/components/links/link-library.tsx", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("Enter a valid URL")).toBeInTheDocument();
+  });
+
+  it("asks for confirmation before deleting", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      status: 204,
+      text: async () => "",
+    } as Response);
+
+    render(
+      <LinkLibrary
+        currentTimeMs={new Date("2026-03-17T18:00:00.000Z").getTime()}
+        links={[buildLink()]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(window.confirm).toHaveBeenCalledWith("Delete /meta123? This cannot be undone.");
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/links/link-123",
+        expect.objectContaining({ method: "DELETE" }),
+      );
+    });
+  });
+
+  it("removes a link from the list after a successful delete", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      status: 204,
+      text: async () => "",
+    } as Response);
+
+    render(
+      <LinkLibrary
+        currentTimeMs={new Date("2026-03-17T18:00:00.000Z").getTime()}
+        links={[buildLink()]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("Launch plan")).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("You haven't created any links yet.")).toBeInTheDocument();
+  });
+
+  it("shows an error when delete fails", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: false,
+      json: async () => ({
+        error: {
+          message: "Link not found",
+        },
+      }),
+    } as Response);
+
+    render(
+      <LinkLibrary
+        currentTimeMs={new Date("2026-03-17T18:00:00.000Z").getTime()}
+        links={[buildLink()]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByText("Link not found")).toBeInTheDocument();
+    expect(screen.getByText("Launch plan")).toBeInTheDocument();
+  });
+
+  it("shows a network error message when the delete fetch throws", async () => {
+    vi.mocked(global.fetch).mockRejectedValue(new TypeError("Failed to fetch"));
+
+    render(
+      <LinkLibrary
+        currentTimeMs={new Date("2026-03-17T18:00:00.000Z").getTime()}
+        links={[buildLink()]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(
+      await screen.findByText("Unable to delete link right now. Please check your connection and try again."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Launch plan")).toBeInTheDocument();
+  });
+
+  it("does not delete when confirmation is cancelled", () => {
+    vi.mocked(window.confirm).mockReturnValue(false);
+
+    render(
+      <LinkLibrary
+        currentTimeMs={new Date("2026-03-17T18:00:00.000Z").getTime()}
+        links={[buildLink()]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(window.confirm).toHaveBeenCalledWith("Delete /meta123? This cannot be undone.");
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(screen.getByText("Launch plan")).toBeInTheDocument();
   });
 
   it("shows an expired badge for expired links", () => {

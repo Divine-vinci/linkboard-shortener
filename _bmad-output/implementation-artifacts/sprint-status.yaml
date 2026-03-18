@@ -58,7 +58,7 @@ development_status:
   2-3-link-metadata-management: done
   2-4-link-expiration: done
   2-5-update-link-target-url: done
-  2-6-delete-links: backlog
+  2-6-delete-links: done
   2-7-redirect-engine-with-redis-caching: backlog
   2-8-link-library-with-search-and-filter: backlog
   2-9-create-link-with-board-assignment: backlog
