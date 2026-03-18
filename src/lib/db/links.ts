@@ -1,5 +1,6 @@
 import type { Link } from "@prisma/client";
 
+import { invalidateRedirectCache } from "@/lib/cache/invalidation";
 import { prisma } from "@/lib/db/client";
 
 export type LinkMetadataData = Pick<Link, "title" | "description" | "tags">;
@@ -37,10 +38,14 @@ export async function updateLink(id: string, userId: string, data: UpdateLinkDat
     return null;
   }
 
-  return prisma.link.update({
+  const updatedLink = await prisma.link.update({
     where: { id },
     data,
   });
+
+  await invalidateRedirectCache(link.slug);
+
+  return updatedLink;
 }
 
 export async function deleteLink(id: string, userId: string): Promise<boolean> {
@@ -53,6 +58,8 @@ export async function deleteLink(id: string, userId: string): Promise<boolean> {
   await prisma.link.delete({
     where: { id },
   });
+
+  await invalidateRedirectCache(link.slug);
 
   return true;
 }

@@ -8,8 +8,8 @@
 - Phase: 4
 - Current story: Story 2.7 Redirect Engine with Redis Caching
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: Story 2.6 implemented, fallback code review passed with no material issues, and changes were committed/pushed (commit: 7267370).
-- Next step: Start story 2.7: Redirect Engine with Redis Caching via Phase 4 story loop
+- Last action: Heartbeat recovery validated Story 2.7 locally, saved `_bmad-output/implementation-artifacts/2-7-code-review.md`, completed the stalled `code-review` workflow, and marked Story 2.7 done in the story + sprint tracker.
+- Next step: Commit Story 2.7 locally, then start story 2.8: Link Library with Search and Filter via the Phase 4 story loop
 
 ## Latest Completed Session
 - subagent_session_key: agent:main:subagent:01456ba1-2011-4536-a94d-acc1573e6dfe
@@ -25,6 +25,12 @@
 - acp_session_key: agent:claude:acp:f218bbd5-104a-4883-b916-da4b368a0006
 - acp_workflow: code-review
 - acp_status: completed
+
+## ACP Session
+- acp_session_key: agent:claude:acp:8b861b24-e151-452b-8c2b-04d31b9ace67
+- acp_started_at: 2026-03-18T00:30:00Z
+- acp_workflow: create-story
+- acp_status: running
 
 ## Previous ACP Session
 - acp_session_key: agent:claude:acp:14eedc69-6c14-45a2-a0c8-f8405a2ee5ca
@@ -69,7 +75,7 @@
 - [x] Story 2.4: Link Expiration (commit: 5f5bbed)
 - [x] Story 2.5: Update Link Target URL (commit: 3c245f8)
 - [x] Story 2.6: Delete Links (commit: 7267370)
-- [ ] Story 2.7: Redirect Engine with Redis Caching
+- [x] Story 2.7: Redirect Engine with Redis Caching
 - [ ] Story 2.8: Link Library with Search and Filter
 - [ ] Story 2.9: Create Link with Board Assignment
 
@@ -122,6 +128,7 @@
 - [x] dev-story — Story 2.6 (output: implementation-artifacts/2-6-dev-story-result.md)
 - [x] code-review — Story 2.6 (output: implementation-artifacts/2-6-code-review.md, fallback review after ACP state drift)
 - [x] Story 2.6 loop complete (commit: 7267370)
+- [x] code-review — Story 2.7 (output: implementation-artifacts/2-7-code-review.md, heartbeat fallback after ACP drift)
 
 ## Blockers
 - Mission Control task mapping is incomplete in progress.md; local repo remains source of truth.
