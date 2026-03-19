@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { RegisterForm } from "@/components/auth/register-form";
 import { oauthProviderAvailability } from "@/lib/auth/config";
@@ -29,6 +31,15 @@ export default function RegisterPage() {
           </div>
         ) : null}
         <RegisterForm />
+        <p className="text-center text-sm text-zinc-400">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="font-medium text-emerald-300 underline-offset-4 transition hover:text-emerald-200 hover:underline"
+          >
+            Sign in
+          </Link>
+        </p>
       </div>
     </section>
   );

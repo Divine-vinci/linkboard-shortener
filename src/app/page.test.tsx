@@ -1,24 +1,40 @@
-import { vi } from "vitest";
+import { vi, describe, it, expect } from "vitest";
 
-vi.mock("@/config/env", () => ({
-  env: {
-    NODE_ENV: "test",
-    NEXT_PUBLIC_APP_URL: "http://localhost:3000",
-    DATABASE_URL: "postgresql://localhost/test",
-    REDIS_URL: "redis://localhost:6379",
-    AUTH_SECRET: "test-secret",
-    AUTH_URL: "http://localhost:3000",
-  },
+vi.mock("@/lib/auth/config", () => ({
+  auth: vi.fn().mockResolvedValue(null),
 }));
 
-import { render, screen } from "@testing-library/react";
-import Home from "@/app/page";
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn(),
+}));
 
-describe("Home", () => {
-  it("renders the foundation readiness message", () => {
-    render(<Home />);
+import { redirect } from "next/navigation";
+import HomePage from "@/app/page";
 
-    expect(screen.getByText(/Linkboard foundation is ready for feature work/i)).toBeInTheDocument();
-    expect(screen.getByText(/Validated app URL/i)).toBeInTheDocument();
+describe("HomePage", () => {
+  it("does not redirect unauthenticated visitors", async () => {
+    const { auth } = await import("@/lib/auth/config");
+    (auth as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+
+    // Render the async server component
+    const result = await HomePage();
+
+    expect(redirect).not.toHaveBeenCalled();
+    expect(result).toBeTruthy();
+  });
+
+  it("redirects authenticated users to /dashboard", async () => {
+    const { auth } = await import("@/lib/auth/config");
+    (auth as ReturnType<typeof vi.fn>).mockResolvedValue({
+      user: { id: "u1", email: "test@example.com" },
+    });
+
+    try {
+      await HomePage();
+    } catch {
+      // redirect throws in test environment
+    }
+
+    expect(redirect).toHaveBeenCalledWith("/dashboard");
   });
 });

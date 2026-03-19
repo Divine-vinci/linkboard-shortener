@@ -51,7 +51,16 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         ) : null}
         <LoginForm />
-        <div className="text-right text-sm">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-zinc-400">
+            No account?{" "}
+            <Link
+              href="/register"
+              className="font-medium text-emerald-300 underline-offset-4 transition hover:text-emerald-200 hover:underline"
+            >
+              Sign up
+            </Link>
+          </span>
           <Link
             href="/reset-password"
             className="font-medium text-emerald-300 underline-offset-4 transition hover:text-emerald-200 hover:underline"
