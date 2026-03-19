@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { BAR_COLORS } from "@/components/analytics/chart-colors";
 import type { GeoBreakdownItem } from "@/lib/db/analytics";
 
 const COUNTRY_LABELS: Record<string, string> = {
@@ -54,8 +55,6 @@ const COUNTRY_LABELS: Record<string, string> = {
   ZA: "South Africa",
 };
 
-const BAR_COLORS = ["#34d399", "#10b981", "#6ee7b7", "#059669", "#a7f3d0"];
-
 function getCountryLabel(country: string) {
   if (country === "Unknown") {
     return "Unknown";
@@ -69,10 +68,10 @@ function buildSummary(data: GeoBreakdownItem[]) {
     return "No geographic data is available yet for this link.";
   }
 
-  const topCountry = data[0];
   const totalClicks = data.reduce((sum, item) => sum + item.clicks, 0);
+  const parts = data.map((item) => `${getCountryLabel(item.country)}: ${item.clicks}`);
 
-  return `Top country: ${getCountryLabel(topCountry?.country ?? "Unknown")} with ${topCountry?.clicks ?? 0} clicks out of ${totalClicks} total.`;
+  return `${data.length} countries totalling ${totalClicks} clicks. ${parts.join(", ")}.`;
 }
 
 export function GeoChart({ data }: { data: GeoBreakdownItem[] }) {

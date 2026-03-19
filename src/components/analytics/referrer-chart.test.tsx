@@ -30,7 +30,7 @@ describe("src/components/analytics/referrer-chart.tsx", () => {
 
     expect(screen.getByRole("region", { name: "Referrer analytics" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Top traffic sources" })).toBeInTheDocument();
-    expect(screen.getByText("Top referrer: twitter.com with 8 clicks out of 11 total.")).toBeInTheDocument();
+    expect(screen.getByText("2 referrer sources totalling 11 clicks. twitter.com: 8, google.com: 3.")).toBeInTheDocument();
     expect(screen.getByTestId("bar-chart")).toHaveAttribute("data-points", "2");
   });
 

@@ -6,16 +6,16 @@
 
 ## Current State
 - Phase: 4
-- Current story: Story 7.5 API Rate Limiting (DEV STORY RUNNING)
+- Current story: Story 7.6 OpenAPI Documentation (DONE)
 - Working directory: /home/clawd/projects/linkboard-shortener
-- Last action: 2026-03-19 03:30 UTC heartbeat resumed Story 7.5, detected dev-story output present in the working tree, and started ACP code review session `agent:claude:acp:105047d1-b28c-4bfe-930e-bc5e073b6a91`.
-- Next step: Poll ACP session agent:claude:acp:105047d1-b28c-4bfe-930e-bc5e073b6a91 for code-review completion, then commit & push Story 7.5 and advance to Story 7.6
+- Last action: 2026-03-19 05:32 UTC heartbeat recovered stalled code-review handoff, reran focused verification for Story 7.6, finalized the BMAD code-review workflow, and marked sprint tracking complete.
+- Next step: Commit & push Story 7.6 OpenAPI Documentation (includes pending reviewed analytics fixes), then set project to Wait for /deploy if push succeeds
 
 ## Active Create Story Session
-- acp_session_key: agent:claude:acp:360cd64a-ad48-457a-af1a-bd2671cf6e12
+- acp_session_key: agent:claude:acp:5382e773-5177-41eb-8b2f-64069264c0e6
 - acp_workflow: create-story
-- acp_status: running
-- acp_started_at: 2026-03-19T02:36:00Z
+- acp_status: completed
+- acp_started_at: 2026-03-19T04:00:00Z
 
 ## Active Dev Session
 - subagent_session_key: agent:main:subagent:0dfb5013-ed4d-48f9-b423-c9bfab4475a2
@@ -115,8 +115,8 @@
 - [x] Story 7.2: Links REST API Endpoints (commit: 6af4c0b)
 - [x] Story 7.3: Boards and Board Links REST API Endpoints (commit: 59741cc)
 - [x] Story 7.4: Analytics REST API Endpoints (commit: eb02ae1)
-- [ ] Story 7.5: API Rate Limiting
-- [ ] Story 7.6: OpenAPI Documentation
+- [x] Story 7.5: API Rate Limiting (commit: 21fe2a5)
+- [x] Story 7.6: OpenAPI Documentation
 
 ## Completed Workflows
 - [x] project initialization
@@ -142,6 +142,8 @@
 - [x] code-review — Story 7.3 (commit: 59741cc)
 - [x] dev-story — Story 7.4
 - [x] code-review — Story 7.4 (commit: eb02ae1)
+- [x] dev-story — Story 7.5
+- [x] code-review — Story 7.5 (commit: 21fe2a5)
 
 ## Blockers
 - BMAD session state drift between Story 6.1 and Story 6.2; stale ACP and `_bmad/state.json` entries need clean handoff on next workflow start.

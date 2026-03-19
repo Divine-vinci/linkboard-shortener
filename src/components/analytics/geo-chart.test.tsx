@@ -30,7 +30,7 @@ describe("src/components/analytics/geo-chart.tsx", () => {
 
     expect(screen.getByRole("region", { name: "Geographic analytics" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Country distribution" })).toBeInTheDocument();
-    expect(screen.getByText("Top country: United States (US) with 6 clicks out of 8 total.")).toBeInTheDocument();
+    expect(screen.getByText("2 countries totalling 8 clicks. United States (US): 6, Nigeria (NG): 2.")).toBeInTheDocument();
     expect(screen.getByTestId("bar-chart")).toHaveAttribute("data-points", "2");
   });
 
