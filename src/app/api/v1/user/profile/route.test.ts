@@ -6,11 +6,23 @@ vi.mock("@/lib/auth/config", () => ({
   auth: vi.fn(),
 }));
 
+vi.mock("@/lib/auth/api-key-middleware", async () => {
+  const { auth } = await import("@/lib/auth/config");
+  return {
+    resolveSessionApiIdentity: async () => {
+      const session = await auth();
+      const userId = session?.user?.id ?? null;
+      return userId ? { userId, rateLimitKey: `user:${userId}`, kind: "user" as const } : null;
+    },
+  };
+});
+
 vi.mock("@/lib/db/users", () => ({
   findUserById: vi.fn(),
   updateUser: vi.fn(),
 }));
 
+const { __resetRateLimitStore } = await import("@/lib/rate-limit");
 const { GET, PATCH } = await import("@/app/api/v1/user/profile/route");
 const authModule = await import("@/lib/auth/config");
 const mockedAuth = authModule.auth as ReturnType<typeof vi.fn>;
@@ -19,6 +31,7 @@ const users = await import("@/lib/db/users");
 describe("src/app/api/v1/user/profile/route.ts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetRateLimitStore();
   });
 
   it("returns 401 for unauthenticated GET requests", async () => {
@@ -83,6 +96,42 @@ describe("src/app/api/v1/user/profile/route.ts", () => {
       error: {
         code: "UNAUTHORIZED",
         message: "Authentication required",
+      },
+    });
+  });
+
+  it("returns 429 after the session api limit is exceeded", async () => {
+    mockedAuth.mockResolvedValue({
+      user: { id: "user-123", email: "user@example.com" },
+      expires: "2026-03-18T12:00:00.000Z",
+    });
+    vi.mocked(users.findUserById).mockResolvedValue({
+      id: "user-123",
+      name: "Vinci",
+      email: "user@example.com",
+      image: null,
+      passwordHash: "secret-hash",
+      emailVerified: null,
+      createdAt: new Date("2026-03-17T12:00:00.000Z"),
+      updatedAt: new Date("2026-03-17T12:00:00.000Z"),
+    });
+
+    for (let attempt = 1; attempt <= 100; attempt += 1) {
+      const response = await GET();
+      expect(response.status).toBe(200);
+    }
+
+    const response = await GET();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBeTruthy();
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "RATE_LIMITED",
+        message: "Too many requests",
+        details: {
+          retryAfter: expect.any(Number),
+        },
       },
     });
   });

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api-response";
-import { auth } from "@/lib/auth/config";
+import { resolveSessionApiIdentity } from "@/lib/auth/api-key-middleware";
 import { findUserById, updateUser } from "@/lib/db/users";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { enforceApiRateLimit } from "@/lib/rate-limit";
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 import { updateProfileSchema } from "@/lib/validations/profile";
 
@@ -26,21 +27,23 @@ function toProfileResponse(user: SafeProfile) {
   };
 }
 
-async function requireSessionUserId() {
-  const session = await auth();
-  return session?.user?.id ?? null;
-}
-
 export async function GET() {
-  const userId = await requireSessionUserId();
+  const identity = await resolveSessionApiIdentity();
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json(
       errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
       { status: 401 },
     );
   }
 
+  const rateLimitedResponse = await enforceApiRateLimit(identity.rateLimitKey);
+
+  if (rateLimitedResponse) {
+    return rateLimitedResponse;
+  }
+
+  const userId = identity.userId;
   const user = await findUserById(userId);
 
   if (!user) {
@@ -55,14 +58,22 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const userId = await requireSessionUserId();
+  const identity = await resolveSessionApiIdentity();
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json(
       errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
       { status: 401 },
     );
   }
+
+  const rateLimitedResponse = await enforceApiRateLimit(identity.rateLimitKey);
+
+  if (rateLimitedResponse) {
+    return rateLimitedResponse;
+  }
+
+  const userId = identity.userId;
 
   try {
     const json = await request.json();

@@ -12,11 +12,16 @@ vi.mock("@/lib/auth/api-key-middleware", async () => {
   const authenticateApiKey = vi.fn();
   return {
     authenticateApiKey,
-    resolveUserId: async (request: Request) => {
+    resolveApiRequestIdentity: async (request: Request) => {
       const apiKeyAuth = await authenticateApiKey(request);
-      if (apiKeyAuth) return apiKeyAuth.userId;
+
+      if (apiKeyAuth) {
+        return { userId: apiKeyAuth.userId, rateLimitKey: `api-key:${apiKeyAuth.apiKeyId}`, kind: "apiKey" as const };
+      }
+
       const session = await auth();
-      return session?.user?.id ?? null;
+      const userId = session?.user?.id ?? null;
+      return userId ? { userId, rateLimitKey: `user:${userId}`, kind: "user" as const } : null;
     },
   };
 });
@@ -27,6 +32,7 @@ vi.mock("@/lib/db/boards", () => ({
   findBoardsByUserId: vi.fn(),
 }));
 
+const { __resetRateLimitStore } = await import("@/lib/rate-limit");
 const { GET, POST } = await import("@/app/api/v1/boards/route");
 const authModule = await import("@/lib/auth/config");
 const apiKeyAuthModule = await import("@/lib/auth/api-key-middleware");
@@ -57,6 +63,7 @@ function buildBoard(overrides: Partial<Record<string, unknown>> = {}) {
 describe("src/app/api/v1/boards/route.ts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetRateLimitStore();
     mockedAuthenticateApiKey.mockResolvedValue(null);
   });
 

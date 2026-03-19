@@ -100,6 +100,6 @@ development_status:
   7-2-links-rest-api-endpoints: done
   7-3-boards-and-board-links-rest-api-endpoints: done
   7-4-analytics-rest-api-endpoints: done
-  7-5-api-rate-limiting: backlog
+  7-5-api-rate-limiting: done
   7-6-openapi-documentation: backlog
   epic-7-retrospective: optional

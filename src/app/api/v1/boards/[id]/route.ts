@@ -1,22 +1,31 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse, toBoardResponse } from "@/lib/api-response";
-import { resolveUserId } from "@/lib/auth/api-key-middleware";
+import { resolveApiRequestIdentity } from "@/lib/auth/api-key-middleware";
 import { deleteBoard, findBoardSummaryById, updateBoard } from "@/lib/db/boards";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { enforceApiRateLimit } from "@/lib/rate-limit";
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 import { updateBoardSchema } from "@/lib/validations/board";
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
-  const userId = await resolveUserId(request);
+  const identity = await resolveApiRequestIdentity(request);
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json(
       errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
       { status: 401 },
     );
   }
+
+  const rateLimitedResponse = await enforceApiRateLimit(identity.rateLimitKey);
+
+  if (rateLimitedResponse) {
+    return rateLimitedResponse;
+  }
+
+  const userId = identity.userId;
 
   try {
     const { id } = await context.params;
@@ -40,14 +49,22 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 }
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  const userId = await resolveUserId(request);
+  const identity = await resolveApiRequestIdentity(request);
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json(
       errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
       { status: 401 },
     );
   }
+
+  const rateLimitedResponse = await enforceApiRateLimit(identity.rateLimitKey);
+
+  if (rateLimitedResponse) {
+    return rateLimitedResponse;
+  }
+
+  const userId = identity.userId;
 
   try {
     const { id } = await context.params;
@@ -90,14 +107,22 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 }
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
-  const userId = await resolveUserId(request);
+  const identity = await resolveApiRequestIdentity(request);
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json(
       errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
       { status: 401 },
     );
   }
+
+  const rateLimitedResponse = await enforceApiRateLimit(identity.rateLimitKey);
+
+  if (rateLimitedResponse) {
+    return rateLimitedResponse;
+  }
+
+  const userId = identity.userId;
 
   try {
     const { id } = await context.params;

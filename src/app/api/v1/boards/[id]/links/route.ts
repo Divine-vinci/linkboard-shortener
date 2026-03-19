@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api-response";
-import { resolveUserId } from "@/lib/auth/api-key-middleware";
+import { resolveApiRequestIdentity } from "@/lib/auth/api-key-middleware";
 import { addLinkToBoard } from "@/lib/db/board-links";
 import { findBoardSummaryById } from "@/lib/db/boards";
 import { findLinkById } from "@/lib/db/links";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { enforceApiRateLimit } from "@/lib/rate-limit";
 import { addBoardLinkSchema } from "@/lib/validations/board";
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 
@@ -19,14 +20,22 @@ function isUniqueConstraintError(error: unknown) {
 }
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  const userId = await resolveUserId(request);
+  const identity = await resolveApiRequestIdentity(request);
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json(
       errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
       { status: 401 },
     );
   }
+
+  const rateLimitedResponse = await enforceApiRateLimit(identity.rateLimitKey);
+
+  if (rateLimitedResponse) {
+    return rateLimitedResponse;
+  }
+
+  const userId = identity.userId;
 
   try {
     const { id } = await context.params;

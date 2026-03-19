@@ -2,27 +2,31 @@ import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api-response";
 import { generateApiKey } from "@/lib/auth/api-key";
-import { auth } from "@/lib/auth/config";
+import { resolveSessionApiIdentity } from "@/lib/auth/api-key-middleware";
 import { createApiKey, findApiKeysByUserId } from "@/lib/db/api-keys";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { enforceApiRateLimit } from "@/lib/rate-limit";
 import { createApiKeySchema } from "@/lib/validations/api-key";
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 
-async function requireSessionUserId() {
-  const session = await auth();
-  return session?.user?.id ?? null;
-}
-
 export async function GET() {
-  const userId = await requireSessionUserId();
+  const identity = await resolveSessionApiIdentity();
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json(
       errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
       { status: 401 },
     );
   }
+
+  const rateLimitedResponse = await enforceApiRateLimit(identity.rateLimitKey);
+
+  if (rateLimitedResponse) {
+    return rateLimitedResponse;
+  }
+
+  const userId = identity.userId;
 
   try {
     const apiKeys = await findApiKeysByUserId(userId);
@@ -37,14 +41,22 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const userId = await requireSessionUserId();
+  const identity = await resolveSessionApiIdentity();
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json(
       errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
       { status: 401 },
     );
   }
+
+  const rateLimitedResponse = await enforceApiRateLimit(identity.rateLimitKey);
+
+  if (rateLimitedResponse) {
+    return rateLimitedResponse;
+  }
+
+  const userId = identity.userId;
 
   try {
     const json = await request.json();

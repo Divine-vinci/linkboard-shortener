@@ -1,23 +1,31 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse, toBoardResponse } from "@/lib/api-response";
-import { resolveUserId } from "@/lib/auth/api-key-middleware";
+import { resolveApiRequestIdentity } from "@/lib/auth/api-key-middleware";
 import { countBoardsByUserId, createBoard, findBoardsByUserId } from "@/lib/db/boards";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { enforceApiRateLimit } from "@/lib/rate-limit";
 import { createBoardSchema, boardListQuerySchema } from "@/lib/validations/board";
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 
 export async function GET(request: Request) {
-  const userId = await resolveUserId(request);
+  const identity = await resolveApiRequestIdentity(request);
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json(
       errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
       { status: 401 },
     );
   }
 
+  const rateLimitedResponse = await enforceApiRateLimit(identity.rateLimitKey);
+
+  if (rateLimitedResponse) {
+    return rateLimitedResponse;
+  }
+
+  const userId = identity.userId;
   const url = new URL(request.url);
   const parsed = boardListQuerySchema.safeParse({
     limit: url.searchParams.get("limit") ?? undefined,
@@ -58,14 +66,22 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const userId = await resolveUserId(request);
+  const identity = await resolveApiRequestIdentity(request);
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json(
       errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
       { status: 401 },
     );
   }
+
+  const rateLimitedResponse = await enforceApiRateLimit(identity.rateLimitKey);
+
+  if (rateLimitedResponse) {
+    return rateLimitedResponse;
+  }
+
+  const userId = identity.userId;
 
   try {
     const json = await request.json();

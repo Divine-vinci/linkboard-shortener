@@ -11,11 +11,16 @@ vi.mock("@/lib/auth/api-key-middleware", async () => {
   const authenticateApiKey = vi.fn();
   return {
     authenticateApiKey,
-    resolveUserId: async (request: Request) => {
+    resolveApiRequestIdentity: async (request: Request) => {
       const apiKeyAuth = await authenticateApiKey(request);
-      if (apiKeyAuth) return apiKeyAuth.userId;
+
+      if (apiKeyAuth) {
+        return { userId: apiKeyAuth.userId, rateLimitKey: `api-key:${apiKeyAuth.apiKeyId}`, kind: "apiKey" as const };
+      }
+
       const session = await auth();
-      return session?.user?.id ?? null;
+      const userId = session?.user?.id ?? null;
+      return userId ? { userId, rateLimitKey: `user:${userId}`, kind: "user" as const } : null;
     },
   };
 });
@@ -45,6 +50,7 @@ vi.mock("@/lib/slug", () => ({
   generateSlug: vi.fn(),
 }));
 
+const { __resetRateLimitStore } = await import("@/lib/rate-limit");
 const { GET, POST } = await import("@/app/api/v1/links/route");
 const authModule = await import("@/lib/auth/config");
 const apiKeyAuthModule = await import("@/lib/auth/api-key-middleware");
@@ -78,6 +84,7 @@ function buildLink(overrides: Partial<Record<string, unknown>> = {}) {
 describe("src/app/api/v1/links/route.ts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetRateLimitStore();
     mockedAuthenticateApiKey.mockResolvedValue(null);
   });
 
@@ -120,6 +127,41 @@ describe("src/app/api/v1/links/route.ts", () => {
       tags: undefined,
       expiresAt: undefined,
       userId: "user-123",
+    });
+  });
+
+  it("returns 429 with retry metadata after the api limit is exceeded", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue({ userId: "user-123", apiKeyId: "key-123" });
+    vi.mocked(links.findLinksWithOffset).mockResolvedValue({ links: [], total: 0 });
+
+    for (let attempt = 1; attempt <= 100; attempt += 1) {
+      const response = await GET(
+        new Request(`http://localhost:3000/api/v1/links?offset=${attempt - 1}`, {
+          method: "GET",
+          headers: { authorization: "Bearer lb_secret" },
+        }),
+      );
+
+      expect(response.status).toBe(200);
+    }
+
+    const response = await GET(
+      new Request("http://localhost:3000/api/v1/links?offset=100", {
+        method: "GET",
+        headers: { authorization: "Bearer lb_secret" },
+      }),
+    );
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBeTruthy();
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "RATE_LIMITED",
+        message: "Too many requests",
+        details: {
+          retryAfter: expect.any(Number),
+        },
+      },
     });
   });
 
@@ -515,6 +557,7 @@ describe("src/app/api/v1/links/route.ts", () => {
 describe("GET src/app/api/v1/links/route.ts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __resetRateLimitStore();
     mockedAuthenticateApiKey.mockResolvedValue(null);
   });
 

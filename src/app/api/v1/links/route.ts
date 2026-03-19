@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse, toLinkResponse } from "@/lib/api-response";
-import { resolveUserId } from "@/lib/auth/api-key-middleware";
+import { resolveApiRequestIdentity } from "@/lib/auth/api-key-middleware";
 import { addLinkToBoard } from "@/lib/db/board-links";
 import { findBoardById } from "@/lib/db/boards";
 import { prisma } from "@/lib/db/client";
 import { createLink, findLinkBySlug, findLinksForLibrary, findLinksWithOffset } from "@/lib/db/links";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { enforceApiRateLimit } from "@/lib/rate-limit";
 import { generateSlug } from "@/lib/slug";
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 import { apiCreateLinkSchema, apiListLinksQuerySchema } from "@/lib/validations/api-link";
@@ -103,15 +104,22 @@ async function createLinkWithGeneratedSlug(data: {
 }
 
 export async function GET(request: Request) {
-  const userId = await resolveUserId(request);
+  const identity = await resolveApiRequestIdentity(request);
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json(
       errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
       { status: 401 },
     );
   }
 
+  const rateLimitedResponse = await enforceApiRateLimit(identity.rateLimitKey);
+
+  if (rateLimitedResponse) {
+    return rateLimitedResponse;
+  }
+
+  const userId = identity.userId;
   const url = new URL(request.url);
   const hasOffsetPagination = url.searchParams.has("offset");
 
@@ -214,14 +222,22 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const userId = await resolveUserId(request);
+  const identity = await resolveApiRequestIdentity(request);
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json(
       errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
       { status: 401 },
     );
   }
+
+  const rateLimitedResponse = await enforceApiRateLimit(identity.rateLimitKey);
+
+  if (rateLimitedResponse) {
+    return rateLimitedResponse;
+  }
+
+  const userId = identity.userId;
 
   try {
     const json = await request.json();
@@ -238,7 +254,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const customSlug = "slug" in parsed.data ? parsed.data.slug : parsed.data.customSlug;
+    const customSlug = (
+      ("slug" in parsed.data && typeof parsed.data.slug === "string" ? parsed.data.slug : undefined) ??
+      ("customSlug" in parsed.data && typeof parsed.data.customSlug === "string" ? parsed.data.customSlug : undefined)
+    );
 
     let link;
 

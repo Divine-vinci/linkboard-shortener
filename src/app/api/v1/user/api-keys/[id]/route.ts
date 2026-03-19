@@ -1,25 +1,29 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse } from "@/lib/api-response";
-import { auth } from "@/lib/auth/config";
+import { resolveSessionApiIdentity } from "@/lib/auth/api-key-middleware";
 import { deleteApiKey } from "@/lib/db/api-keys";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
-
-async function requireSessionUserId() {
-  const session = await auth();
-  return session?.user?.id ?? null;
-}
+import { enforceApiRateLimit } from "@/lib/rate-limit";
 
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const userId = await requireSessionUserId();
+  const identity = await resolveSessionApiIdentity();
 
-  if (!userId) {
+  if (!identity) {
     return NextResponse.json(
       errorResponse(new AppError("UNAUTHORIZED", "Authentication required", 401)),
       { status: 401 },
     );
   }
+
+  const rateLimitedResponse = await enforceApiRateLimit(identity.rateLimitKey);
+
+  if (rateLimitedResponse) {
+    return rateLimitedResponse;
+  }
+
+  const userId = identity.userId;
 
   try {
     const { id } = await context.params;

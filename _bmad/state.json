@@ -662,6 +662,18 @@
       "agentId": "dev",
       "outputFile": "",
       "completedAt": "2026-03-19T02:30:36.626Z"
+    },
+    {
+      "id": "create-story",
+      "agentId": "sm",
+      "outputFile": "",
+      "completedAt": "2026-03-19T03:02:06.550Z"
+    },
+    {
+      "id": "code-review",
+      "agentId": "dev",
+      "outputFile": "",
+      "completedAt": "2026-03-19T04:00:51.773Z"
     }
   ]
 }
