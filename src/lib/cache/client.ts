@@ -3,9 +3,30 @@ import Redis from "ioredis";
 import { env } from "@/config/env";
 import { logger } from "@/lib/logger";
 
-let redisInstance: Redis | null = null;
+type RedisLike = Pick<Redis, "get" | "setex" | "del">;
 
-function createRedisClient() {
+let redisInstance: RedisLike | null = null;
+
+const redisNoopClient: RedisLike = {
+  async get() {
+    return null;
+  },
+  async setex() {
+    return "OK";
+  },
+  async del() {
+    return 0;
+  },
+};
+
+function createRedisClient(): RedisLike {
+  if (!env.REDIS_URL) {
+    logger.warn("redis.client_disabled", {
+      reason: "REDIS_URL not configured",
+    });
+    return redisNoopClient;
+  }
+
   const client = new Redis(env.REDIS_URL, {
     lazyConnect: true,
     maxRetriesPerRequest: 1,
@@ -19,7 +40,7 @@ function createRedisClient() {
   return client;
 }
 
-export const redis = new Proxy({} as Redis, {
+export const redis: RedisLike = new Proxy(redisNoopClient, {
   get(_target, property, receiver) {
     redisInstance ??= createRedisClient();
     return Reflect.get(redisInstance, property, receiver);

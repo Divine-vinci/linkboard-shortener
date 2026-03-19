@@ -4,7 +4,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   NEXT_PUBLIC_APP_URL: z.url(),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
-  REDIS_URL: z.string().min(1).default("redis://localhost:6379"),
+  REDIS_URL: z.string().default(""),
   AUTH_SECRET: z.string().min(1, "AUTH_SECRET is required"),
   AUTH_URL: z.url(),
   GITHUB_CLIENT_ID: z.string().default(""),
