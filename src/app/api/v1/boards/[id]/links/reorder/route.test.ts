@@ -6,6 +6,20 @@ vi.mock("@/lib/auth/config", () => ({
   auth: vi.fn(),
 }));
 
+vi.mock("@/lib/auth/api-key-middleware", async () => {
+  const { auth } = await import("@/lib/auth/config");
+  const authenticateApiKey = vi.fn();
+  return {
+    authenticateApiKey,
+    resolveUserId: async (request: Request) => {
+      const apiKeyAuth = await authenticateApiKey(request);
+      if (apiKeyAuth) return apiKeyAuth.userId;
+      const session = await auth();
+      return session?.user?.id ?? null;
+    },
+  };
+});
+
 vi.mock("@/lib/db/board-links", () => ({
   getBoardLinksWithMetadata: vi.fn(),
   reorderBoardLinks: vi.fn(),
@@ -17,10 +31,12 @@ vi.mock("@/lib/db/boards", () => ({
 
 const { PATCH } = await import("@/app/api/v1/boards/[id]/links/reorder/route");
 const authModule = await import("@/lib/auth/config");
+const apiKeyAuthModule = await import("@/lib/auth/api-key-middleware");
 const boardLinksModule = await import("@/lib/db/board-links");
 const boardsModule = await import("@/lib/db/boards");
 
 const mockedAuth = authModule.auth as Mock;
+const mockedAuthenticateApiKey = apiKeyAuthModule.authenticateApiKey as Mock;
 
 function buildBoard(overrides: Partial<Record<string, unknown>> = {}) {
   return {
@@ -62,6 +78,7 @@ function buildBoardLink(id: string, linkId: string, position: number) {
 describe("PATCH src/app/api/v1/boards/[id]/links/reorder/route.ts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedAuthenticateApiKey.mockResolvedValue(null);
   });
 
   it("reorders board links and returns 200", async () => {
@@ -123,6 +140,36 @@ describe("PATCH src/app/api/v1/boards/[id]/links/reorder/route.ts", () => {
         },
       ],
     });
+  });
+
+  it("reorders board links with api key auth", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue({ userId: "user-123", apiKeyId: "key-123" });
+    vi.mocked(boardsModule.findBoardSummaryById).mockResolvedValue(buildBoard());
+    vi.mocked(boardLinksModule.getBoardLinksWithMetadata).mockResolvedValue([
+      buildBoardLink("bl-1", "22222222-2222-4222-8222-222222222222", 0),
+    ]);
+    vi.mocked(boardLinksModule.reorderBoardLinks).mockResolvedValue([
+      {
+        id: "bl-1",
+        boardId: "11111111-1111-4111-8111-111111111111",
+        linkId: "22222222-2222-4222-8222-222222222222",
+        position: 0,
+      },
+    ]);
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/boards/11111111-1111-4111-8111-111111111111/links/reorder", {
+        method: "PATCH",
+        headers: { authorization: "Bearer lb_secret" },
+        body: JSON.stringify({
+          linkIds: ["22222222-2222-4222-8222-222222222222"],
+        }),
+      }),
+      { params: Promise.resolve({ id: "11111111-1111-4111-8111-111111111111" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockedAuth).not.toHaveBeenCalled();
   });
 
   it("returns 404 when the board is not owned by the session user", async () => {
@@ -211,5 +258,29 @@ describe("PATCH src/app/api/v1/boards/[id]/links/reorder/route.ts", () => {
       },
     });
     expect(boardLinksModule.reorderBoardLinks).not.toHaveBeenCalled();
+  });
+
+  it("returns 401 for invalid api keys", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue(null);
+    mockedAuth.mockResolvedValue(null);
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/boards/11111111-1111-4111-8111-111111111111/links/reorder", {
+        method: "PATCH",
+        headers: { authorization: "Bearer invalid" },
+        body: JSON.stringify({
+          linkIds: ["22222222-2222-4222-8222-222222222222"],
+        }),
+      }),
+      { params: Promise.resolve({ id: "11111111-1111-4111-8111-111111111111" }) },
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
+      },
+    });
   });
 });

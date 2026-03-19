@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api-response";
-import { auth } from "@/lib/auth/config";
+import { resolveUserId } from "@/lib/auth/api-key-middleware";
 import { getBoardLinksWithMetadata, reorderBoardLinks } from "@/lib/db/board-links";
 import { findBoardSummaryById } from "@/lib/db/boards";
 import { AppError } from "@/lib/errors";
@@ -10,8 +10,7 @@ import { reorderBoardLinksSchema } from "@/lib/validations/board";
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  const userId = session?.user?.id;
+  const userId = await resolveUserId(request);
 
   if (!userId) {
     return NextResponse.json(

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse, toBoardResponse } from "@/lib/api-response";
-import { auth } from "@/lib/auth/config";
+import { resolveUserId } from "@/lib/auth/api-key-middleware";
 import { countBoardsByUserId, createBoard, findBoardsByUserId } from "@/lib/db/boards";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
@@ -9,8 +9,7 @@ import { createBoardSchema, boardListQuerySchema } from "@/lib/validations/board
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 
 export async function GET(request: Request) {
-  const session = await auth();
-  const userId = session?.user?.id;
+  const userId = await resolveUserId(request);
 
   if (!userId) {
     return NextResponse.json(
@@ -59,8 +58,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  const userId = session?.user?.id;
+  const userId = await resolveUserId(request);
 
   if (!userId) {
     return NextResponse.json(

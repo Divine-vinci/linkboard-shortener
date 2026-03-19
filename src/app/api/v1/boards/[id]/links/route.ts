@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api-response";
-import { auth } from "@/lib/auth/config";
+import { resolveUserId } from "@/lib/auth/api-key-middleware";
 import { addLinkToBoard } from "@/lib/db/board-links";
 import { findBoardSummaryById } from "@/lib/db/boards";
 import { findLinkById } from "@/lib/db/links";
@@ -19,8 +19,7 @@ function isUniqueConstraintError(error: unknown) {
 }
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  const userId = session?.user?.id;
+  const userId = await resolveUserId(request);
 
   if (!userId) {
     return NextResponse.json(

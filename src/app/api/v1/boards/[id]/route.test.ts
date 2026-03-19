@@ -7,6 +7,20 @@ vi.mock("@/lib/auth/config", () => ({
   auth: vi.fn(),
 }));
 
+vi.mock("@/lib/auth/api-key-middleware", async () => {
+  const { auth } = await import("@/lib/auth/config");
+  const authenticateApiKey = vi.fn();
+  return {
+    authenticateApiKey,
+    resolveUserId: async (request: Request) => {
+      const apiKeyAuth = await authenticateApiKey(request);
+      if (apiKeyAuth) return apiKeyAuth.userId;
+      const session = await auth();
+      return session?.user?.id ?? null;
+    },
+  };
+});
+
 vi.mock("@/lib/db/boards", () => ({
   deleteBoard: vi.fn(),
   findBoardSummaryById: vi.fn(),
@@ -15,9 +29,11 @@ vi.mock("@/lib/db/boards", () => ({
 
 const { DELETE, GET, PATCH } = await import("@/app/api/v1/boards/[id]/route");
 const authModule = await import("@/lib/auth/config");
+const apiKeyAuthModule = await import("@/lib/auth/api-key-middleware");
 const boardsModule = await import("@/lib/db/boards");
 
 const mockedAuth = authModule.auth as Mock;
+const mockedAuthenticateApiKey = apiKeyAuthModule.authenticateApiKey as Mock;
 
 function buildBoard(overrides: Partial<Record<string, unknown>> = {}) {
   const createdAt = new Date("2026-03-18T02:00:00.000Z");
@@ -41,6 +57,7 @@ function buildBoard(overrides: Partial<Record<string, unknown>> = {}) {
 describe("src/app/api/v1/boards/[id]/route.ts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedAuthenticateApiKey.mockResolvedValue(null);
   });
 
   it("returns an owned board", async () => {
@@ -68,6 +85,42 @@ describe("src/app/api/v1/boards/[id]/route.ts", () => {
         createdAt: "2026-03-18T02:00:00.000Z",
         updatedAt: "2026-03-18T02:00:00.000Z",
         _count: { boardLinks: 2 },
+      },
+    });
+  });
+
+  it("returns an owned board with api key auth", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue({ userId: "user-123", apiKeyId: "key-123" });
+    vi.mocked(boardsModule.findBoardSummaryById).mockResolvedValue(buildBoard());
+
+    const response = await GET(
+      new Request("http://localhost:3000/api/v1/boards/board-123", {
+        headers: { authorization: "Bearer lb_secret" },
+      }),
+      { params: Promise.resolve({ id: "board-123" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockedAuth).not.toHaveBeenCalled();
+    expect(boardsModule.findBoardSummaryById).toHaveBeenCalledWith("board-123");
+  });
+
+  it("returns 404 for boards not owned by the api key user", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue({ userId: "user-123", apiKeyId: "key-123" });
+    vi.mocked(boardsModule.findBoardSummaryById).mockResolvedValue(buildBoard({ userId: "user-999" }));
+
+    const response = await GET(
+      new Request("http://localhost:3000/api/v1/boards/board-123", {
+        headers: { authorization: "Bearer lb_secret" },
+      }),
+      { params: Promise.resolve({ id: "board-123" }) },
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "NOT_FOUND",
+        message: "Board not found",
       },
     });
   });
@@ -124,6 +177,26 @@ describe("src/app/api/v1/boards/[id]/route.ts", () => {
         slug: "ideas",
         visibility: BoardVisibility.Private,
       }),
+    });
+  });
+
+  it("updates a board with api key auth", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue({ userId: "user-123", apiKeyId: "key-123" });
+    vi.mocked(boardsModule.updateBoard).mockResolvedValue(buildBoard({ name: "Updated via api" }));
+
+    const response = await PATCH(
+      new Request("http://localhost:3000/api/v1/boards/board-123", {
+        method: "PATCH",
+        headers: { authorization: "Bearer lb_secret" },
+        body: JSON.stringify({ name: "Updated via api" }),
+      }),
+      { params: Promise.resolve({ id: "board-123" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockedAuth).not.toHaveBeenCalled();
+    expect(boardsModule.updateBoard).toHaveBeenCalledWith("board-123", "user-123", {
+      name: "Updated via api",
     });
   });
 
@@ -225,6 +298,23 @@ describe("src/app/api/v1/boards/[id]/route.ts", () => {
     expect(await response.text()).toBe("");
   });
 
+  it("deletes an owned board with api key auth", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue({ userId: "user-123", apiKeyId: "key-123" });
+    vi.mocked(boardsModule.deleteBoard).mockResolvedValue(true);
+
+    const response = await DELETE(
+      new Request("http://localhost:3000/api/v1/boards/board-123", {
+        method: "DELETE",
+        headers: { authorization: "Bearer lb_secret" },
+      }),
+      { params: Promise.resolve({ id: "board-123" }) },
+    );
+
+    expect(response.status).toBe(204);
+    expect(mockedAuth).not.toHaveBeenCalled();
+    expect(boardsModule.deleteBoard).toHaveBeenCalledWith("board-123", "user-123");
+  });
+
   it("returns 404 when deleting a board that does not exist or is not owned", async () => {
     vi.mocked(mockedAuth).mockResolvedValue({
       user: { id: "user-123", email: "user@example.com" },
@@ -269,6 +359,37 @@ describe("src/app/api/v1/boards/[id]/route.ts", () => {
       },
     });
     expect(boardsModule.updateBoard).not.toHaveBeenCalled();
+  });
+
+  it("returns 401 for invalid api keys across board requests", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue(null);
+    mockedAuth.mockResolvedValue(null);
+
+    const getResponse = await GET(
+      new Request("http://localhost:3000/api/v1/boards/board-123", {
+        headers: { authorization: "Bearer invalid" },
+      }),
+      { params: Promise.resolve({ id: "board-123" }) },
+    );
+    const patchResponse = await PATCH(
+      new Request("http://localhost:3000/api/v1/boards/board-123", {
+        method: "PATCH",
+        headers: { authorization: "Bearer invalid" },
+        body: JSON.stringify({ name: "Nope" }),
+      }),
+      { params: Promise.resolve({ id: "board-123" }) },
+    );
+    const deleteResponse = await DELETE(
+      new Request("http://localhost:3000/api/v1/boards/board-123", {
+        method: "DELETE",
+        headers: { authorization: "Bearer invalid" },
+      }),
+      { params: Promise.resolve({ id: "board-123" }) },
+    );
+
+    expect(getResponse.status).toBe(401);
+    expect(patchResponse.status).toBe(401);
+    expect(deleteResponse.status).toBe(401);
   });
 
   it("returns 401 for unauthenticated board requests", async () => {

@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse, toBoardResponse } from "@/lib/api-response";
-import { auth } from "@/lib/auth/config";
+import { resolveUserId } from "@/lib/auth/api-key-middleware";
 import { deleteBoard, findBoardSummaryById, updateBoard } from "@/lib/db/boards";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { fieldErrorsFromZod } from "@/lib/validations/helpers";
 import { updateBoardSchema } from "@/lib/validations/board";
 
-export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  const userId = session?.user?.id;
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+  const userId = await resolveUserId(request);
 
   if (!userId) {
     return NextResponse.json(
@@ -41,8 +40,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 }
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  const userId = session?.user?.id;
+  const userId = await resolveUserId(request);
 
   if (!userId) {
     return NextResponse.json(
@@ -91,9 +89,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   }
 }
 
-export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  const userId = session?.user?.id;
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+  const userId = await resolveUserId(request);
 
   if (!userId) {
     return NextResponse.json(

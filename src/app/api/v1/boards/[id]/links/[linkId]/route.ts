@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse } from "@/lib/api-response";
-import { auth } from "@/lib/auth/config";
+import { resolveUserId } from "@/lib/auth/api-key-middleware";
 import { recompactBoardLinkPositions, removeLinkFromBoard } from "@/lib/db/board-links";
 import { findBoardSummaryById } from "@/lib/db/boards";
 import { prisma } from "@/lib/db/client";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 
-export async function DELETE(_request: Request, context: { params: Promise<{ id: string; linkId: string }> }) {
-  const session = await auth();
-  const userId = session?.user?.id;
+export async function DELETE(request: Request, context: { params: Promise<{ id: string; linkId: string }> }) {
+  const userId = await resolveUserId(request);
 
   if (!userId) {
     return NextResponse.json(

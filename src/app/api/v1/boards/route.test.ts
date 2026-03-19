@@ -7,6 +7,20 @@ vi.mock("@/lib/auth/config", () => ({
   auth: vi.fn(),
 }));
 
+vi.mock("@/lib/auth/api-key-middleware", async () => {
+  const { auth } = await import("@/lib/auth/config");
+  const authenticateApiKey = vi.fn();
+  return {
+    authenticateApiKey,
+    resolveUserId: async (request: Request) => {
+      const apiKeyAuth = await authenticateApiKey(request);
+      if (apiKeyAuth) return apiKeyAuth.userId;
+      const session = await auth();
+      return session?.user?.id ?? null;
+    },
+  };
+});
+
 vi.mock("@/lib/db/boards", () => ({
   countBoardsByUserId: vi.fn(),
   createBoard: vi.fn(),
@@ -15,9 +29,11 @@ vi.mock("@/lib/db/boards", () => ({
 
 const { GET, POST } = await import("@/app/api/v1/boards/route");
 const authModule = await import("@/lib/auth/config");
+const apiKeyAuthModule = await import("@/lib/auth/api-key-middleware");
 const boardsModule = await import("@/lib/db/boards");
 
 const mockedAuth = authModule.auth as Mock;
+const mockedAuthenticateApiKey = apiKeyAuthModule.authenticateApiKey as Mock;
 
 function buildBoard(overrides: Partial<Record<string, unknown>> = {}) {
   const createdAt = new Date("2026-03-18T02:00:00.000Z");
@@ -41,6 +57,7 @@ function buildBoard(overrides: Partial<Record<string, unknown>> = {}) {
 describe("src/app/api/v1/boards/route.ts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedAuthenticateApiKey.mockResolvedValue(null);
   });
 
   it("creates a board and returns 201", async () => {
@@ -85,6 +102,32 @@ describe("src/app/api/v1/boards/route.ts", () => {
     });
   });
 
+  it("creates a board with a valid api key", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue({ userId: "user-123", apiKeyId: "key-123" });
+    vi.mocked(boardsModule.createBoard).mockResolvedValue(buildBoard());
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/boards", {
+        method: "POST",
+        headers: { authorization: "Bearer lb_secret" },
+        body: JSON.stringify({
+          name: "Ideas",
+          description: "Product notes",
+          visibility: "Public",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(mockedAuth).not.toHaveBeenCalled();
+    expect(boardsModule.createBoard).toHaveBeenCalledWith({
+      name: "Ideas",
+      description: "Product notes",
+      visibility: BoardVisibility.Public,
+      userId: "user-123",
+    });
+  });
+
   it("returns 400 for invalid board payloads", async () => {
     vi.mocked(mockedAuth).mockResolvedValue({
       user: { id: "user-123", email: "user@example.com" },
@@ -108,6 +151,27 @@ describe("src/app/api/v1/boards/route.ts", () => {
             name: "Board name is required",
           },
         },
+      },
+    });
+  });
+
+  it("returns 401 for invalid api keys when creating a board", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue(null);
+    mockedAuth.mockResolvedValue(null);
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/boards", {
+        method: "POST",
+        headers: { authorization: "Bearer invalid" },
+        body: JSON.stringify({ name: "Ideas" }),
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
       },
     });
   });
@@ -172,6 +236,40 @@ describe("src/app/api/v1/boards/route.ts", () => {
         total: 2,
         limit: 10,
         offset: 5,
+      },
+    });
+  });
+
+  it("returns paginated boards for a valid api key", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue({ userId: "user-123", apiKeyId: "key-123" });
+    vi.mocked(boardsModule.findBoardsByUserId).mockResolvedValue([buildBoard()]);
+    vi.mocked(boardsModule.countBoardsByUserId).mockResolvedValue(1);
+
+    const response = await GET(
+      new Request("http://localhost:3000/api/v1/boards?limit=20&offset=0", {
+        headers: { authorization: "Bearer lb_secret" },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockedAuth).not.toHaveBeenCalled();
+    expect(boardsModule.findBoardsByUserId).toHaveBeenCalledWith("user-123", { limit: 20, offset: 0 });
+    expect(boardsModule.countBoardsByUserId).toHaveBeenCalledWith("user-123");
+  });
+
+  it("returns 401 for invalid api keys when listing boards", async () => {
+    mockedAuthenticateApiKey.mockResolvedValue(null);
+    mockedAuth.mockResolvedValue(null);
+
+    const response = await GET(new Request("http://localhost:3000/api/v1/boards", {
+      headers: { authorization: "Bearer invalid" },
+    }));
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
       },
     });
   });
